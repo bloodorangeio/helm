@@ -41,5 +41,6 @@ require (
 
 replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible
+	github.com/containerd/containerd => github.com/bloodorangeio/containerd v1.3.3-0.20200212172345-0ae40b4f21dc
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
 )

@@ -225,7 +225,7 @@ func createTarGzipWriter(c *chart.Chart, outDir string) (*tarGzipWriter, error) 
 	return cxvf, nil
 }
 
-func writeTarContents(out *tar.Writer, c *chart.Chart, prefix string) error {
+func writeTarContents(out *tar.Writer, c *chart.Chart, prefix string, timestamp time.Time) error {
 	base := filepath.Join(prefix, c.Name())
 
 	// Pull out the dependencies of a v1 Chart, since there's no way
@@ -242,7 +242,7 @@ func writeTarContents(out *tar.Writer, c *chart.Chart, prefix string) error {
 	if err != nil {
 		return err
 	}
-	if err := writeToTar(out, filepath.Join(base, ChartfileName), cdata); err != nil {
+	if err := writeToTar(out, filepath.Join(base, ChartfileName), cdata, timestamp); err != nil {
 		return err
 	}
 
@@ -254,7 +254,7 @@ func writeTarContents(out *tar.Writer, c *chart.Chart, prefix string) error {
 			if err != nil {
 				return err
 			}
-			if err := writeToTar(out, filepath.Join(base, "Chart.lock"), ldata); err != nil {
+			if err := writeToTar(out, filepath.Join(base, "Chart.lock"), ldata, timestamp); err != nil {
 				return err
 			}
 		}
@@ -263,7 +263,7 @@ func writeTarContents(out *tar.Writer, c *chart.Chart, prefix string) error {
 	// Save values.yaml
 	for _, f := range c.Raw {
 		if f.Name == ValuesfileName {
-			if err := writeToTar(out, filepath.Join(base, ValuesfileName), f.Data); err != nil {
+			if err := writeToTar(out, filepath.Join(base, ValuesfileName), f.Data, timestamp); err != nil {
 				return err
 			}
 		}
@@ -274,7 +274,7 @@ func writeTarContents(out *tar.Writer, c *chart.Chart, prefix string) error {
 		if !json.Valid(c.Schema) {
 			return errors.New("Invalid JSON in " + SchemafileName)
 		}
-		if err := writeToTar(out, filepath.Join(base, SchemafileName), c.Schema); err != nil {
+		if err := writeToTar(out, filepath.Join(base, SchemafileName), c.Schema, timestamp); err != nil {
 			return err
 		}
 	}
@@ -282,7 +282,7 @@ func writeTarContents(out *tar.Writer, c *chart.Chart, prefix string) error {
 	// Save templates
 	for _, f := range c.Templates {
 		n := filepath.Join(base, f.Name)
-		if err := writeToTar(out, n, f.Data); err != nil {
+		if err := writeToTar(out, n, f.Data, timestamp); err != nil {
 			return err
 		}
 	}
@@ -290,14 +290,14 @@ func writeTarContents(out *tar.Writer, c *chart.Chart, prefix string) error {
 	// Save files
 	for _, f := range c.Files {
 		n := filepath.Join(base, f.Name)
-		if err := writeToTar(out, n, f.Data); err != nil {
+		if err := writeToTar(out, n, f.Data, timestamp); err != nil {
 			return err
 		}
 	}
 
 	// Save dependencies
 	for _, dep := range c.Dependencies() {
-		if err := writeTarContents(out, dep, filepath.Join(base, ChartsDir)); err != nil {
+		if err := writeTarContents(out, dep, filepath.Join(base, ChartsDir), timestamp); err != nil {
 			return err
 		}
 	}
@@ -305,13 +305,13 @@ func writeTarContents(out *tar.Writer, c *chart.Chart, prefix string) error {
 }
 
 // writeToTar writes a single file to a tar archive.
-func writeToTar(out *tar.Writer, name string, body []byte) error {
+func writeToTar(out *tar.Writer, name string, body []byte, timestamp time.Time) error {
 	// TODO: Do we need to create dummy parent directory names if none exist?
 	h := &tar.Header{
 		Name:    filepath.ToSlash(name),
 		Mode:    0644,
 		Size:    int64(len(body)),
-		ModTime: time.Now(),
+		ModTime: timestamp,
 	}
 	if err := out.WriteHeader(h); err != nil {
 		return err

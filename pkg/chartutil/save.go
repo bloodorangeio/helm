@@ -31,6 +31,34 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 )
 
+type (
+	tarGzipWriter struct {
+		TarWriter  *tar.Writer
+		GzipWriter *gzip.Writer
+		File       *os.File
+	}
+
+	saveConfig struct {
+		noTimestamp bool
+	}
+
+	// SaveOpt is an option for modifying the behavior of Save
+	SaveOpt func(*saveConfig)
+)
+
+// WithoutTimestamp provides the ability to save tar archives without a timestamp
+func WithoutTimestamp() SaveOpt {
+	return func(cfg *saveConfig) {
+		cfg.noTimestamp = true
+	}
+}
+
+func (w *tarGzipWriter) Close() {
+	w.TarWriter.Close()
+	w.GzipWriter.Close()
+	w.File.Close()
+}
+
 var headerBytes = []byte("+aHR0cHM6Ly95b3V0dS5iZS96OVV6MWljandyTQo=")
 
 // SaveDir saves a chart as files in a directory.
@@ -100,8 +128,64 @@ func SaveDir(c *chart.Chart, dest string) error {
 //
 // This returns the absolute path to the chart archive file.
 func Save(c *chart.Chart, outDir string) (string, error) {
+	tgzWriter, err := createTarGzipWriter(c, outDir)
+	if err != nil {
+		return "", err
+	}
+
+	filename := tgzWriter.File.Name()
+	rollback := false
+
+	defer func() {
+		tgzWriter.Close()
+		if rollback {
+			os.Remove(filename)
+		}
+	}()
+
+	if err := writeTarContents(tgzWriter.TarWriter, c, "", time.Now()); err != nil {
+		rollback = true
+		return filename, err
+	}
+	return filename, nil
+}
+
+func SaveWithOpts(c *chart.Chart, outDir string, opts ...SaveOpt) (string, error) {
+	config := new(saveConfig)
+	for _, fn := range opts {
+		fn(config)
+	}
+
+	tgzWriter, err := createTarGzipWriter(c, outDir)
+	if err != nil {
+		return "", err
+	}
+
+	filename := tgzWriter.File.Name()
+	rollback := false
+
+	defer func() {
+		tgzWriter.Close()
+		if rollback {
+			os.Remove(filename)
+		}
+	}()
+
+	var timestamp time.Time
+	if !config.noTimestamp {
+		timestamp = time.Now()
+	}
+
+	if err := writeTarContents(tgzWriter.TarWriter, c, "", timestamp); err != nil {
+		rollback = true
+		return filename, err
+	}
+	return filename, nil
+}
+
+func createTarGzipWriter(c *chart.Chart, outDir string) (*tarGzipWriter, error) {
 	if err := c.Validate(); err != nil {
-		return "", errors.Wrap(err, "chart validation")
+		return nil, errors.Wrap(err, "chart validation")
 	}
 
 	filename := fmt.Sprintf("%s-%s.tgz", c.Name(), c.Metadata.Version)
@@ -110,18 +194,18 @@ func Save(c *chart.Chart, outDir string) (string, error) {
 	if stat, err := os.Stat(dir); err != nil {
 		if os.IsNotExist(err) {
 			if err2 := os.MkdirAll(dir, 0755); err2 != nil {
-				return "", err2
+				return nil, err2
 			}
 		} else {
-			return "", errors.Wrapf(err, "stat %s", dir)
+			return nil, errors.Wrapf(err, "stat %s", dir)
 		}
 	} else if !stat.IsDir() {
-		return "", errors.Errorf("is not a directory: %s", dir)
+		return nil, errors.Errorf("is not a directory: %s", dir)
 	}
 
 	f, err := os.Create(filename)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// Wrap in gzip writer
@@ -131,21 +215,14 @@ func Save(c *chart.Chart, outDir string) (string, error) {
 
 	// Wrap in tar writer
 	twriter := tar.NewWriter(zipper)
-	rollback := false
-	defer func() {
-		twriter.Close()
-		zipper.Close()
-		f.Close()
-		if rollback {
-			os.Remove(filename)
-		}
-	}()
 
-	if err := writeTarContents(twriter, c, ""); err != nil {
-		rollback = true
-		return filename, err
+	cxvf := &tarGzipWriter{
+		TarWriter:  twriter,
+		GzipWriter: zipper,
+		File:       f,
 	}
-	return filename, nil
+
+	return cxvf, nil
 }
 
 func writeTarContents(out *tar.Writer, c *chart.Chart, prefix string) error {

@@ -1,4 +1,4 @@
-module helm.sh/helm/v3
+module github.com/bloodorangeio/helm
 
 go 1.13
 
@@ -34,6 +34,7 @@ require (
 	github.com/stretchr/testify v1.5.1
 	github.com/xeipuuv/gojsonschema v1.1.0
 	golang.org/x/crypto v0.0.0-20200414173820-0848c9571904
+	helm.sh/helm/v3 v3.2.3
 	k8s.io/api v0.18.2
 	k8s.io/apiextensions-apiserver v0.18.2
 	k8s.io/apimachinery v0.18.2

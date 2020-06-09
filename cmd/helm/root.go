@@ -28,7 +28,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"helm.sh/helm/v3/internal/completion"
-	"helm.sh/helm/v3/internal/experimental/registry"
+	"helm.sh/helm/v3/pkg/experimental/registry"
 	"helm.sh/helm/v3/pkg/action"
 )
 

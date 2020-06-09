@@ -19,7 +19,7 @@ package action
 import (
 	"io"
 
-	"helm.sh/helm/v3/internal/experimental/registry"
+	"helm.sh/helm/v3/pkg/experimental/registry"
 	"helm.sh/helm/v3/pkg/chart"
 )
 

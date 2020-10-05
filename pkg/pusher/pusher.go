@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package putter
+package pusher
 
 import (
 	"time"
@@ -155,11 +155,6 @@ func (p Providers) ByScheme(scheme string) (Pusher, error) {
 	return nil, errors.Errorf("scheme %q not supported", scheme)
 }
 
-var httpProvider = Provider{
-	Schemes: []string{"http", "https"},
-	New:     NewHTTPPusher,
-}
-
 var ociProvider = Provider{
 	Schemes: []string{"oci"},
 	New:     NewOCIPusher,
@@ -169,7 +164,7 @@ var ociProvider = Provider{
 // Currently, the built-in getters and the discovered plugins with downloader
 // notations are collected.
 func All(settings *cli.EnvSettings) Providers {
-	result := Providers{httpProvider, ociProvider}
+	result := Providers{ociProvider}
 	pluginDownloaders, _ := collectPlugins(settings)
 	result = append(result, pluginDownloaders...)
 	return result

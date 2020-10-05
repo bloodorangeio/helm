@@ -40,7 +40,7 @@ func collectPlugins(settings *cli.EnvSettings) (Providers, error) {
 		for _, downloader := range plugin.Metadata.Downloaders {
 			result = append(result, Provider{
 				Schemes: downloader.Protocols,
-				New: NewPluginGetter(
+				New: NewPluginPusher(
 					downloader.Command,
 					settings,
 					plugin.Metadata.Name,
@@ -52,9 +52,9 @@ func collectPlugins(settings *cli.EnvSettings) (Providers, error) {
 	return result, nil
 }
 
-// pluginGetter is a generic type to invoke custom downloaders,
+// pluginPusher is a generic type to invoke custom downloaders,
 // implemented in plugins.
-type pluginGetter struct {
+type pluginPusher struct {
 	command  string
 	settings *cli.EnvSettings
 	name     string
@@ -63,7 +63,7 @@ type pluginGetter struct {
 }
 
 // Get runs downloader plugin command
-func (p *pluginGetter) Get(href string, options ...Option) (*bytes.Buffer, error) {
+func (p *pluginPusher) Get(href string, options ...Option) (*bytes.Buffer, error) {
 	for _, opt := range options {
 		opt(&p.opts)
 	}
@@ -85,10 +85,10 @@ func (p *pluginGetter) Get(href string, options ...Option) (*bytes.Buffer, error
 	return buf, nil
 }
 
-// NewPluginGetter constructs a valid plugin getter
-func NewPluginGetter(command string, settings *cli.EnvSettings, name, base string) Constructor {
-	return func(options ...Option) (Getter, error) {
-		result := &pluginGetter{
+// NewPluginPusher constructs a valid plugin getter
+func NewPluginPusher(command string, settings *cli.EnvSettings, name, base string) Constructor {
+	return func(options ...Option) (Pusher, error) {
+		result := &pluginPusher{
 			command:  command,
 			settings: settings,
 			name:     name,

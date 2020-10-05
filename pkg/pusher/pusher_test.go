@@ -26,7 +26,7 @@ const pluginDir = "testdata/plugins"
 func TestProvider(t *testing.T) {
 	p := Provider{
 		[]string{"one", "three"},
-		func(_ ...Option) (Getter, error) { return nil, nil },
+		func(_ ...Option) (Pusher, error) { return nil, nil },
 	}
 
 	if !p.Provides("three") {
@@ -36,8 +36,8 @@ func TestProvider(t *testing.T) {
 
 func TestProviders(t *testing.T) {
 	ps := Providers{
-		{[]string{"one", "three"}, func(_ ...Option) (Getter, error) { return nil, nil }},
-		{[]string{"two", "four"}, func(_ ...Option) (Getter, error) { return nil, nil }},
+		{[]string{"one", "three"}, func(_ ...Option) (Pusher, error) { return nil, nil }},
+		{[]string{"two", "four"}, func(_ ...Option) (Pusher, error) { return nil, nil }},
 	}
 
 	if _, err := ps.ByScheme("one"); err != nil {

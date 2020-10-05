@@ -17,7 +17,6 @@ limitations under the License.
 package putter
 
 import (
-	"bytes"
 	"time"
 
 	"github.com/pkg/errors"
@@ -45,7 +44,7 @@ type options struct {
 }
 
 // Option allows specifying various settings configurable by the user for overriding the defaults
-// used when performing Get operations with the Pusher.
+// used when performing Push operations with the Pusher.
 type Option func(*options)
 
 // WithURL informs the getter the server name that will be used when fetching objects. Used in conjunction with
@@ -114,8 +113,8 @@ func WithUntar() Option {
 
 // Pusher is an interface to support GET to the specified URL.
 type Pusher interface {
-	// Get file content by url string
-	Get(url string, options ...Option) (*bytes.Buffer, error)
+	// Push file content by url string
+	Push(url string, options ...Option) (error)
 }
 
 // Constructor is the function for every getter which creates a specific instance
@@ -158,12 +157,12 @@ func (p Providers) ByScheme(scheme string) (Pusher, error) {
 
 var httpProvider = Provider{
 	Schemes: []string{"http", "https"},
-	// New:     NewHTTPPusher,
+	New:     NewHTTPPusher,
 }
 
 var ociProvider = Provider{
 	Schemes: []string{"oci"},
-	// New:     NewOCIPusher,
+	New:     NewOCIPusher,
 }
 
 // All finds all of the registered getters as a list of Provider instances.

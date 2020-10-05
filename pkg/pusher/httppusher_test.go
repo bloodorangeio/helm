@@ -35,14 +35,14 @@ import (
 	"helm.sh/helm/v3/pkg/cli"
 )
 
-func TestHTTPGetter(t *testing.T) {
-	g, err := NewHTTPGetter(WithURL("http://example.com"))
+func TestHTTPPusher(t *testing.T) {
+	g, err := NewHTTPPusher(WithURL("http://example.com"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if _, ok := g.(*HTTPGetter); !ok {
-		t.Fatal("Expected NewHTTPGetter to produce an *HTTPGetter")
+	if _, ok := g.(*HTTPPusher); !ok {
+		t.Fatal("Expected NewHTTPPusher to produce an *HTTPPusher")
 	}
 
 	cd := "../../testdata"
@@ -52,7 +52,7 @@ func TestHTTPGetter(t *testing.T) {
 	timeout := time.Second * 5
 
 	// Test with options
-	g, err = NewHTTPGetter(
+	g, err = NewHTTPPusher(
 		WithBasicAuth("I", "Am"),
 		WithUserAgent("Groot"),
 		WithTLSClientConfig(pub, priv, ca),
@@ -63,60 +63,60 @@ func TestHTTPGetter(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	hg, ok := g.(*HTTPGetter)
+	hg, ok := g.(*HTTPPusher)
 	if !ok {
-		t.Fatal("expected NewHTTPGetter to produce an *HTTPGetter")
+		t.Fatal("expected NewHTTPPusher to produce an *HTTPPusher")
 	}
 
 	if hg.opts.username != "I" {
-		t.Errorf("Expected NewHTTPGetter to contain %q as the username, got %q", "I", hg.opts.username)
+		t.Errorf("Expected NewHTTPPusher to contain %q as the username, got %q", "I", hg.opts.username)
 	}
 
 	if hg.opts.password != "Am" {
-		t.Errorf("Expected NewHTTPGetter to contain %q as the password, got %q", "Am", hg.opts.password)
+		t.Errorf("Expected NewHTTPPusher to contain %q as the password, got %q", "Am", hg.opts.password)
 	}
 
 	if hg.opts.userAgent != "Groot" {
-		t.Errorf("Expected NewHTTPGetter to contain %q as the user agent, got %q", "Groot", hg.opts.userAgent)
+		t.Errorf("Expected NewHTTPPusher to contain %q as the user agent, got %q", "Groot", hg.opts.userAgent)
 	}
 
 	if hg.opts.certFile != pub {
-		t.Errorf("Expected NewHTTPGetter to contain %q as the public key file, got %q", pub, hg.opts.certFile)
+		t.Errorf("Expected NewHTTPPusher to contain %q as the public key file, got %q", pub, hg.opts.certFile)
 	}
 
 	if hg.opts.keyFile != priv {
-		t.Errorf("Expected NewHTTPGetter to contain %q as the private key file, got %q", priv, hg.opts.keyFile)
+		t.Errorf("Expected NewHTTPPusher to contain %q as the private key file, got %q", priv, hg.opts.keyFile)
 	}
 
 	if hg.opts.caFile != ca {
-		t.Errorf("Expected NewHTTPGetter to contain %q as the CA file, got %q", ca, hg.opts.caFile)
+		t.Errorf("Expected NewHTTPPusher to contain %q as the CA file, got %q", ca, hg.opts.caFile)
 	}
 
 	if hg.opts.insecureSkipVerifyTLS != insecure {
-		t.Errorf("Expected NewHTTPGetter to contain %t as InsecureSkipVerifyTLs flag, got %t", false, hg.opts.insecureSkipVerifyTLS)
+		t.Errorf("Expected NewHTTPPusher to contain %t as InsecureSkipVerifyTLs flag, got %t", false, hg.opts.insecureSkipVerifyTLS)
 	}
 
 	if hg.opts.timeout != timeout {
-		t.Errorf("Expected NewHTTPGetter to contain %s as Timeout flag, got %s", timeout, hg.opts.timeout)
+		t.Errorf("Expected NewHTTPPusher to contain %s as Timeout flag, got %s", timeout, hg.opts.timeout)
 	}
 
 	// Test if setting insecureSkipVerifyTLS is being passed to the ops
 	insecure = true
 
-	g, err = NewHTTPGetter(
+	g, err = NewHTTPPusher(
 		WithInsecureSkipVerifyTLS(insecure),
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	hg, ok = g.(*HTTPGetter)
+	hg, ok = g.(*HTTPPusher)
 	if !ok {
-		t.Fatal("expected NewHTTPGetter to produce an *HTTPGetter")
+		t.Fatal("expected NewHTTPPusher to produce an *HTTPPusher")
 	}
 
 	if hg.opts.insecureSkipVerifyTLS != insecure {
-		t.Errorf("Expected NewHTTPGetter to contain %t as InsecureSkipVerifyTLs flag, got %t", insecure, hg.opts.insecureSkipVerifyTLS)
+		t.Errorf("Expected NewHTTPPusher to contain %t as InsecureSkipVerifyTLs flag, got %t", insecure, hg.opts.insecureSkipVerifyTLS)
 	}
 }
 
@@ -160,7 +160,7 @@ func TestDownload(t *testing.T) {
 	defer basicAuthSrv.Close()
 
 	u, _ := url.ParseRequestURI(basicAuthSrv.URL)
-	httpgetter, err := NewHTTPGetter(
+	httpgetter, err := NewHTTPPusher(
 		WithURL(u.String()),
 		WithBasicAuth("username", "password"),
 		WithUserAgent(expectedUserAgent),
@@ -194,7 +194,7 @@ func TestDownloadTLS(t *testing.T) {
 	defer tlsSrv.Close()
 
 	u, _ := url.ParseRequestURI(tlsSrv.URL)
-	g, err := NewHTTPGetter(
+	g, err := NewHTTPPusher(
 		WithURL(u.String()),
 		WithTLSClientConfig(pub, priv, ca),
 	)
@@ -206,8 +206,8 @@ func TestDownloadTLS(t *testing.T) {
 		t.Error(err)
 	}
 
-	// now test with TLS config being passed along in .Get (see #6635)
-	g, err = NewHTTPGetter()
+	// now test with TLS config being passed along in .Push (see #6635)
+	g, err = NewHTTPPusher()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -217,7 +217,7 @@ func TestDownloadTLS(t *testing.T) {
 	}
 
 	// test with only the CA file (see also #6635)
-	g, err = NewHTTPGetter()
+	g, err = NewHTTPPusher()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -234,7 +234,7 @@ func TestDownloadInsecureSkipTLSVerify(t *testing.T) {
 	u, _ := url.ParseRequestURI(ts.URL)
 
 	// Ensure the default behaviour did not change
-	g, err := NewHTTPGetter(
+	g, err := NewHTTPPusher(
 		WithURL(u.String()),
 	)
 	if err != nil {
@@ -242,11 +242,11 @@ func TestDownloadInsecureSkipTLSVerify(t *testing.T) {
 	}
 
 	if _, err := g.Get(u.String()); err == nil {
-		t.Errorf("Expected Getter to throw an error, got %s", err)
+		t.Errorf("Expected Pusher to throw an error, got %s", err)
 	}
 
 	// Test certificate check skip
-	g, err = NewHTTPGetter(
+	g, err = NewHTTPPusher(
 		WithURL(u.String()),
 		WithInsecureSkipVerifyTLS(true),
 	)
@@ -259,14 +259,14 @@ func TestDownloadInsecureSkipTLSVerify(t *testing.T) {
 
 }
 
-func TestHTTPGetterTarDownload(t *testing.T) {
+func TestHTTPPusherTarDownload(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		f, _ := os.Open("testdata/empty-0.0.1.tgz")
 		defer f.Close()
 
 		b := make([]byte, 512)
 		f.Read(b)
-		//Get the file size
+		//Push the file size
 		FileStat, _ := f.Stat()
 		FileSize := strconv.FormatInt(FileStat.Size(), 10)
 
@@ -281,7 +281,7 @@ func TestHTTPGetterTarDownload(t *testing.T) {
 
 	defer srv.Close()
 
-	g, err := NewHTTPGetter(WithURL(srv.URL))
+	g, err := NewHTTPPusher(WithURL(srv.URL))
 	if err != nil {
 		t.Fatal(err)
 	}

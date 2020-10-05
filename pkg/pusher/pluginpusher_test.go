@@ -49,14 +49,14 @@ func TestCollectPlugins(t *testing.T) {
 	}
 }
 
-func TestPluginGetter(t *testing.T) {
+func TestPluginPusher(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("TODO: refactor this test to work on windows")
 	}
 
 	env := cli.New()
 	env.PluginsDirectory = pluginDir
-	pg := NewPluginGetter("echo", env, "test", ".")
+	pg := NewPluginPusher("echo", env, "test", ".")
 	g, err := pg()
 	if err != nil {
 		t.Fatal(err)
@@ -82,7 +82,7 @@ func TestPluginSubCommands(t *testing.T) {
 	env := cli.New()
 	env.PluginsDirectory = pluginDir
 
-	pg := NewPluginGetter("echo -n", env, "test", ".")
+	pg := NewPluginPusher("echo -n", env, "test", ".")
 	g, err := pg()
 	if err != nil {
 		t.Fatal(err)

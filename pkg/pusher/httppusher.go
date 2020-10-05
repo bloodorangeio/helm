@@ -28,20 +28,20 @@ import (
 	"helm.sh/helm/v3/internal/version"
 )
 
-// HTTPGetter is the default HTTP(/S) backend handler
-type HTTPGetter struct {
+// HTTPPusher is the default HTTP(/S) backend handler
+type HTTPPusher struct {
 	opts options
 }
 
-//Get performs a Get from repo.Getter and returns the body.
-func (g *HTTPGetter) Get(href string, options ...Option) (*bytes.Buffer, error) {
+//Get performs a Get from repo.Pusher and returns the body.
+func (g *HTTPPusher) Get(href string, options ...Option) (*bytes.Buffer, error) {
 	for _, opt := range options {
 		opt(&g.opts)
 	}
 	return g.get(href)
 }
 
-func (g *HTTPGetter) get(href string) (*bytes.Buffer, error) {
+func (g *HTTPPusher) get(href string) (*bytes.Buffer, error) {
 	buf := bytes.NewBuffer(nil)
 
 	// Set a helm specific user agent so that a repo server and metrics can
@@ -78,9 +78,9 @@ func (g *HTTPGetter) get(href string) (*bytes.Buffer, error) {
 	return buf, err
 }
 
-// NewHTTPGetter constructs a valid http/https client as a Getter
-func NewHTTPGetter(options ...Option) (Getter, error) {
-	var client HTTPGetter
+// NewHTTPPusher constructs a valid http/https client as a Pusher
+func NewHTTPPusher(options ...Option) (Pusher, error) {
+	var client HTTPPusher
 
 	for _, opt := range options {
 		opt(&client.opts)
@@ -89,7 +89,7 @@ func NewHTTPGetter(options ...Option) (Getter, error) {
 	return &client, nil
 }
 
-func (g *HTTPGetter) httpClient() (*http.Client, error) {
+func (g *HTTPPusher) httpClient() (*http.Client, error) {
 	transport := &http.Transport{
 		DisableCompression: true,
 		Proxy:              http.ProxyFromEnvironment,

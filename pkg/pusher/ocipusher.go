@@ -16,27 +16,26 @@ limitations under the License.
 package putter
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 
 	"helm.sh/helm/v3/internal/experimental/registry"
 )
 
-// OCIGetter is the default HTTP(/S) backend handler
-type OCIGetter struct {
+// OCIPusher is the default HTTP(/S) backend handler
+type OCIPusher struct {
 	opts options
 }
 
-//Get performs a Get from repo.Getter and returns the body.
-func (g *OCIGetter) Get(href string, options ...Option) (*bytes.Buffer, error) {
+//Push performs a Push from repo.Pusher and returns the body.
+func (g *OCIPusher) Push(href string, options ...Option) error {
 	for _, opt := range options {
 		opt(&g.opts)
 	}
-	return g.get(href)
+	return g.push(href)
 }
 
-func (g *OCIGetter) get(href string) (*bytes.Buffer, error) {
+func (g *OCIPusher) push(href string) error {
 	client := g.opts.registryClient
 
 	ref := strings.TrimPrefix(href, "oci://")
@@ -46,20 +45,15 @@ func (g *OCIGetter) get(href string) (*bytes.Buffer, error) {
 
 	r, err := registry.ParseReference(ref)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	buf, err := client.PullChart(r)
-	if err != nil {
-		return nil, err
-	}
-
-	return buf, nil
+	return client.PushChart(r)
 }
 
-// NewOCIGetter constructs a valid http/https client as a Getter
-func NewOCIGetter(options ...Option) (Getter, error) {
-	var client OCIGetter
+// NewOCIPusher constructs a valid http/https client as a Pusher
+func NewOCIPusher(options ...Option) (Pusher, error) {
+	var client OCIPusher
 
 	for _, opt := range options {
 		opt(&client.opts)

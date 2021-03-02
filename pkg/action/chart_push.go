@@ -40,5 +40,5 @@ func (a *ChartPush) Run(out io.Writer, ref string) error {
 	if err != nil {
 		return err
 	}
-	return a.cfg.RegistryClient.PushChart(r)
+	return a.cfg.RegistryClient.PushChartFromCache(r)
 }

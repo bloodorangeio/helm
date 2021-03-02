@@ -118,8 +118,38 @@ func (c *Client) Logout(hostname string) error {
 	return nil
 }
 
-// PushChart uploads a chart to a registry
-func (c *Client) PushChart(ref *Reference) error {
+// PushChartFromCache uploads a chart to a registry.
+func (c *Client) PushChart(bytes []byte, ref *Reference) error {
+	fmt.Fprintf(c.out, "The push refers to repository [%s]\n", ref.Repo)
+
+	store := content.NewMemoryStore()
+	descriptor := store.Add("", HelmChartContentLayerMediaType, bytes)
+
+	// TODO: put Chart.yaml JSON-ified into config
+	config := store.Add("", HelmChartConfigMediaType, []byte("{}"))
+
+	layers := []ocispec.Descriptor{descriptor}
+	_, err := oras.Push(ctx(c.out, c.debug), c.resolver, ref.FullName(), store, layers,
+		oras.WithConfig(config), oras.WithNameValidation(nil))
+	if err != nil {
+		return err
+	}
+	s := ""
+	numLayers := len(layers)
+	if 1 < numLayers {
+		s = "s"
+	}
+
+	// TODO: use actual size of content
+	fmt.Fprintf(c.out,
+		"%s: pushed to remote (%d layer%s, %s total)\n", ref.Tag, 1, s, byteCountBinary(1024))
+	return nil
+}
+
+// PushChartFromCache uploads a chart to a registry from the Registry Cache.
+// This function is needed for `helm chart push`, which is experimental and will be deprecated soon.
+// Likewise, the Registry cache will soon be deprecated as will this function.
+func (c *Client) PushChartFromCache(ref *Reference) error {
 	r, err := c.cache.FetchReference(ref)
 	if err != nil {
 		return err

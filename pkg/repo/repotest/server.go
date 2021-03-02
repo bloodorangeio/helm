@@ -190,7 +190,7 @@ func (srv *OCIServer) Run(t *testing.T, opts ...OCIServerOpt) {
 		t.Fatal("error saving chart")
 	}
 
-	err = registryClient.PushChart(ref)
+	err = registryClient.PushChartFromCache(ref)
 	if err != nil {
 		t.Fatal("error pushing chart")
 	}
@@ -207,7 +207,7 @@ func (srv *OCIServer) Run(t *testing.T, opts ...OCIServerOpt) {
 			t.Fatal("error saving depending chart")
 		}
 
-		err = registryClient.PushChart(dependingRef)
+		err = registryClient.PushChartFromCache(dependingRef)
 		if err != nil {
 			t.Fatal("error pushing depending chart")
 		}

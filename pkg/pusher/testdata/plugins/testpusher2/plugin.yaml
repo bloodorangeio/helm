@@ -1,10 +1,10 @@
-name: "testgetter2"
+name: "testpusher2"
 version: "0.1.0"
-usage: "Fetch a different package from a test2:// source"
+usage: "Push a different package to a test2:// remote"
 description: "Handle test2 scheme"
 command: "$HELM_PLUGIN_DIR/push.sh"
 ignoreFlags: true
-downloaders:
+uploaders:
 - command: "echo"
   protocols:
     - "test2"

@@ -1,6 +1,6 @@
-name: "testgetter"
+name: "testpusher"
 version: "0.1.0"
-usage: "Fetch a package from a test:// source"
+usage: "Push a package to a test:// remote"
 description: |-
   Print the environment that the plugin was given, then exit.
 
@@ -8,7 +8,7 @@ description: |-
 
 command: "$HELM_PLUGIN_DIR/push.sh"
 ignoreFlags: true
-downloaders:
+uploaders:
 #- command: "$HELM_PLUGIN_DIR/push.sh"
 - command: "echo"
   protocols:

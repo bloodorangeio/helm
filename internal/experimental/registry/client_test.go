@@ -182,6 +182,10 @@ func (suite *RegistryClientTestSuite) Test_2_LoadChart() {
 }
 
 func (suite *RegistryClientTestSuite) Test_3_PushChart() {
+	// TODO: this test
+}
+
+func (suite *RegistryClientTestSuite) Test_3_PushChartFromCache() {
 
 	// non-existent ref
 	ref, err := ParseReference(fmt.Sprintf("%s/testrepo/whodis:9.9.9", suite.DockerRegistryHost))

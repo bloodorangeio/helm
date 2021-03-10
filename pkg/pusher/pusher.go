@@ -17,30 +17,24 @@ limitations under the License.
 package pusher
 
 import (
-	"time"
-
 	"github.com/pkg/errors"
 
-	"helm.sh/helm/v3/internal/experimental/registry"
 	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/registry"
 )
 
 // options are generic parameters to be provided to the pusher during instantiation.
 //
 // Pushers may or may not ignore these parameters as they are passed in.
 type options struct {
-	url                   string
 	certFile              string
 	keyFile               string
 	caFile                string
-	unTar                 bool
 	insecureSkipVerifyTLS bool
 	username              string
 	password              string
-	userAgent             string
 	version               string
 	registryClient        *registry.Client
-	timeout               time.Duration
 }
 
 // Option allows specifying various settings configurable by the user for overriding the defaults

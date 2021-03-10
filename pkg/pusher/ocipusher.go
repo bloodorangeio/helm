@@ -21,8 +21,8 @@ import (
 	"path"
 	"strings"
 
-	"helm.sh/helm/v3/internal/experimental/registry"
 	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/registry"
 )
 
 // OCIPusher is the default OCI backend handler

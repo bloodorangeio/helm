@@ -18,7 +18,6 @@ package repotest
 import (
 	"context"
 	"fmt"
-	"helm.sh/helm/v3/pkg/chart/loader"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -36,10 +35,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"sigs.k8s.io/yaml"
 
-	ociRegistry "helm.sh/helm/v3/internal/experimental/registry"
 	"helm.sh/helm/v3/internal/tlsutil"
 	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
+	ociRegistry "helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/repo"
 )
 

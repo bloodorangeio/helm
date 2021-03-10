@@ -14,15 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package registry // import "helm.sh/helm/v3/internal/experimental/registry"
+package registry // import "helm.sh/helm/v3/pkg/registry"
 
 import (
-	"github.com/deislabs/oras/pkg/auth"
+	"github.com/containerd/containerd/remotes"
 )
 
 type (
-	// Authorizer handles registry auth operations
-	Authorizer struct {
-		auth.Client
+	// Resolver provides remotes based on a locator
+	Resolver struct {
+		remotes.Resolver
 	}
 )

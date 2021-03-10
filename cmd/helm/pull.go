@@ -18,11 +18,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/spf13/cobra"
 	"io"
 	"log"
-	"strings"
-
-	"github.com/spf13/cobra"
 
 	"helm.sh/helm/v3/cmd/helm/require"
 	"helm.sh/helm/v3/pkg/action"
@@ -63,12 +61,6 @@ func newPullCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 			if client.Version == "" && client.Devel {
 				debug("setting version to >0.0.0-0")
 				client.Version = ">0.0.0-0"
-			}
-
-			if strings.HasPrefix(args[0], "oci://") {
-				if !FeatureGateOCI.IsEnabled() {
-					return FeatureGateOCI.Error()
-				}
 			}
 
 			for i := 0; i < len(args); i++ {

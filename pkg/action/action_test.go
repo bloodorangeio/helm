@@ -21,7 +21,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path/filepath"
 	"testing"
 
 	dockerauth "github.com/deislabs/oras/pkg/auth/docker"
@@ -59,14 +58,6 @@ func actionConfigFixture(t *testing.T) *Configuration {
 
 	t.Cleanup(func() { os.RemoveAll(tdir) })
 
-	cache, err := registry.NewCache(
-		registry.CacheOptDebug(true),
-		registry.CacheOptRoot(filepath.Join(tdir, registry.CacheRootDir)),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	registryClient, err := registry.NewClient(
 		registry.ClientOptAuthorizer(&registry.Authorizer{
 			Client: client,
@@ -74,7 +65,6 @@ func actionConfigFixture(t *testing.T) *Configuration {
 		registry.ClientOptResolver(&registry.Resolver{
 			Resolver: resolver,
 		}),
-		registry.ClientOptCache(cache),
 	)
 	if err != nil {
 		t.Fatal(err)

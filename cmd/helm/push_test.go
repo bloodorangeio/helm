@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"os"
 	"testing"
 
 	"helm.sh/helm/v3/pkg/repo/repotest"
@@ -30,7 +29,6 @@ func TestPushCmd(t *testing.T) {
 	}
 	defer srv.Stop()
 
-	os.Setenv("HELM_EXPERIMENTAL_OCI", "1")
 	ociSrv, err := repotest.NewOCIServer(t, srv.Root())
 	if err != nil {
 		t.Fatal(err)

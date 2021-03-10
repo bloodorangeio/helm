@@ -54,14 +54,7 @@ func ClientOptAuthorizer(authorizer *Authorizer) ClientOption {
 	}
 }
 
-// ClientOptCache returns a function that sets the cache setting on a client options set
-func ClientOptCache(cache *Cache) ClientOption {
-	return func(client *Client) {
-		client.cache = cache
-	}
-}
-
-// ClientOptCredentialsFile returns a function that sets the cache setting on a client options set
+// ClientOptCredentialsFile returns a function that sets the credentialsFile setting on a client options set
 func ClientOptCredentialsFile(credentialsFile string) ClientOption {
 	return func(client *Client) {
 		client.credentialsFile = credentialsFile

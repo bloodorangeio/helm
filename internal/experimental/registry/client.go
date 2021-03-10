@@ -23,16 +23,13 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"sort"
 
 	auth "github.com/deislabs/oras/pkg/auth/docker"
 	"github.com/deislabs/oras/pkg/content"
 	"github.com/deislabs/oras/pkg/oras"
-	"github.com/gosuri/uitable"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 
-	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/helmpath"
 )
 
@@ -42,7 +39,7 @@ const (
 )
 
 type (
-	// Client works with OCI-compliant registries and local Helm chart cache
+	// Client works with OCI-compliant registries
 	Client struct {
 		debug bool
 		// path to repository config file e.g. ~/.docker/config.json
@@ -50,7 +47,6 @@ type (
 		out             io.Writer
 		authorizer      *Authorizer
 		resolver        *Resolver
-		cache           *Cache
 	}
 )
 
@@ -84,17 +80,6 @@ func NewClient(opts ...ClientOption) (*Client, error) {
 			Resolver: resolver,
 		}
 	}
-	if client.cache == nil {
-		cache, err := NewCache(
-			CacheOptDebug(client.debug),
-			CacheOptWriter(client.out),
-			CacheOptRoot(helmpath.CachePath("registry", CacheRootDir)),
-		)
-		if err != nil {
-			return nil, err
-		}
-		client.cache = cache
-	}
 	return client, nil
 }
 
@@ -118,7 +103,7 @@ func (c *Client) Logout(hostname string) error {
 	return nil
 }
 
-// PushChartFromCache uploads a chart to a registry.
+// PushChart uploads a chart to a registry.
 func (c *Client) PushChart(bytes []byte, ref *Reference) error {
 	fmt.Fprintf(c.out, "The push refers to repository [%s]\n", ref.Repo)
 
@@ -143,35 +128,6 @@ func (c *Client) PushChart(bytes []byte, ref *Reference) error {
 	// TODO: use actual size of content
 	fmt.Fprintf(c.out,
 		"%s: pushed to remote (%d layer%s, %s total)\n", ref.Tag, 1, s, byteCountBinary(1024))
-	return nil
-}
-
-// PushChartFromCache uploads a chart to a registry from the Registry Cache.
-// This function is needed for `helm chart push`, which is experimental and will be deprecated soon.
-// Likewise, the Registry cache will soon be deprecated as will this function.
-func (c *Client) PushChartFromCache(ref *Reference) error {
-	r, err := c.cache.FetchReference(ref)
-	if err != nil {
-		return err
-	}
-	if !r.Exists {
-		return errors.New(fmt.Sprintf("Chart not found: %s", r.Name))
-	}
-	fmt.Fprintf(c.out, "The push refers to repository [%s]\n", r.Repo)
-	c.printCacheRefSummary(r)
-	layers := []ocispec.Descriptor{*r.ContentLayer}
-	_, err = oras.Push(ctx(c.out, c.debug), c.resolver, r.Name, c.cache.Provider(), layers,
-		oras.WithConfig(*r.Config), oras.WithNameValidation(nil))
-	if err != nil {
-		return err
-	}
-	s := ""
-	numLayers := len(layers)
-	if 1 < numLayers {
-		s = "s"
-	}
-	fmt.Fprintf(c.out,
-		"%s: pushed to remote (%d layer%s, %s total)\n", r.Tag, numLayers, s, byteCountBinary(r.Size))
 	return nil
 }
 
@@ -224,143 +180,4 @@ func (c *Client) PullChart(ref *Reference) (*bytes.Buffer, error) {
 
 	buf = bytes.NewBuffer(b)
 	return buf, nil
-}
-
-// PullChartToCache pulls a chart from an OCI Registry to the Registry Cache.
-// This function is needed for `helm chart pull`, which is experimental and will be deprecated soon.
-// Likewise, the Registry cache will soon be deprecated as will this function.
-func (c *Client) PullChartToCache(ref *Reference) error {
-	if ref.Tag == "" {
-		return errors.New("tag explicitly required")
-	}
-	existing, err := c.cache.FetchReference(ref)
-	if err != nil {
-		return err
-	}
-	fmt.Fprintf(c.out, "%s: Pulling from %s\n", ref.Tag, ref.Repo)
-	manifest, _, err := oras.Pull(ctx(c.out, c.debug), c.resolver, ref.FullName(), c.cache.Ingester(),
-		oras.WithPullEmptyNameAllowed(),
-		oras.WithAllowedMediaTypes(KnownMediaTypes()),
-		oras.WithContentProvideIngester(c.cache.ProvideIngester()))
-	if err != nil {
-		return err
-	}
-	err = c.cache.AddManifest(ref, &manifest)
-	if err != nil {
-		return err
-	}
-	r, err := c.cache.FetchReference(ref)
-	if err != nil {
-		return err
-	}
-	if !r.Exists {
-		return errors.New(fmt.Sprintf("Chart not found: %s", r.Name))
-	}
-	c.printCacheRefSummary(r)
-	if !existing.Exists {
-		fmt.Fprintf(c.out, "Status: Downloaded newer chart for %s\n", ref.FullName())
-	} else {
-		fmt.Fprintf(c.out, "Status: Chart is up to date for %s\n", ref.FullName())
-	}
-	return err
-}
-
-// SaveChart stores a copy of chart in local cache
-func (c *Client) SaveChart(ch *chart.Chart, ref *Reference) error {
-	r, err := c.cache.StoreReference(ref, ch)
-	if err != nil {
-		return err
-	}
-	c.printCacheRefSummary(r)
-	err = c.cache.AddManifest(ref, r.Manifest)
-	if err != nil {
-		return err
-	}
-	fmt.Fprintf(c.out, "%s: saved\n", r.Tag)
-	return nil
-}
-
-// LoadChart retrieves a chart object by reference
-func (c *Client) LoadChart(ref *Reference) (*chart.Chart, error) {
-	r, err := c.cache.FetchReference(ref)
-	if err != nil {
-		return nil, err
-	}
-	if !r.Exists {
-		return nil, errors.New(fmt.Sprintf("Chart not found: %s", ref.FullName()))
-	}
-	c.printCacheRefSummary(r)
-	return r.Chart, nil
-}
-
-// RemoveChart deletes a locally saved chart
-func (c *Client) RemoveChart(ref *Reference) error {
-	r, err := c.cache.DeleteReference(ref)
-	if err != nil {
-		return err
-	}
-	if !r.Exists {
-		return errors.New(fmt.Sprintf("Chart not found: %s", ref.FullName()))
-	}
-	fmt.Fprintf(c.out, "%s: removed\n", r.Tag)
-	return nil
-}
-
-// PrintChartTable prints a list of locally stored charts
-func (c *Client) PrintChartTable() error {
-	table := uitable.New()
-	table.MaxColWidth = 60
-	table.AddRow("REF", "NAME", "VERSION", "DIGEST", "SIZE", "CREATED")
-	rows, err := c.getChartTableRows()
-	if err != nil {
-		return err
-	}
-	for _, row := range rows {
-		table.AddRow(row...)
-	}
-	fmt.Fprintln(c.out, table.String())
-	return nil
-}
-
-// printCacheRefSummary prints out chart ref summary
-func (c *Client) printCacheRefSummary(r *CacheRefSummary) {
-	fmt.Fprintf(c.out, "ref:     %s\n", r.Name)
-	fmt.Fprintf(c.out, "digest:  %s\n", r.Manifest.Digest.Hex())
-	fmt.Fprintf(c.out, "size:    %s\n", byteCountBinary(r.Size))
-	fmt.Fprintf(c.out, "name:    %s\n", r.Chart.Metadata.Name)
-	fmt.Fprintf(c.out, "version: %s\n", r.Chart.Metadata.Version)
-}
-
-// getChartTableRows returns rows in uitable-friendly format
-func (c *Client) getChartTableRows() ([][]interface{}, error) {
-	rr, err := c.cache.ListReferences()
-	if err != nil {
-		return nil, err
-	}
-	refsMap := map[string]map[string]string{}
-	for _, r := range rr {
-		refsMap[r.Name] = map[string]string{
-			"name":    r.Chart.Metadata.Name,
-			"version": r.Chart.Metadata.Version,
-			"digest":  shortDigest(r.Manifest.Digest.Hex()),
-			"size":    byteCountBinary(r.Size),
-			"created": timeAgo(r.CreatedAt),
-		}
-	}
-	// Sort and convert to format expected by uitable
-	rows := make([][]interface{}, len(refsMap))
-	keys := make([]string, 0, len(refsMap))
-	for key := range refsMap {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	for i, key := range keys {
-		rows[i] = make([]interface{}, 6)
-		rows[i][0] = key
-		ref := refsMap[key]
-		for j, k := range []string{"name", "version", "digest", "size", "created"} {
-			rows[i][j+1] = ref[k]
-		}
-	}
-	return rows, nil
 }

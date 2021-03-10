@@ -18,10 +18,8 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"strings"
-
 	"github.com/spf13/cobra"
+	"io"
 
 	"helm.sh/helm/v3/cmd/helm/require"
 	"helm.sh/helm/v3/pkg/action"
@@ -44,11 +42,6 @@ func newPushCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			chartRef := args[0]
 			remote := args[1]
-			if strings.HasPrefix(remote, "oci://") {
-				if !FeatureGateOCI.IsEnabled() {
-					return FeatureGateOCI.Error()
-				}
-			}
 			client.Settings = settings
 			output, err := client.Run(chartRef, remote)
 			if err != nil {

@@ -18,6 +18,7 @@ package repotest
 import (
 	"context"
 	"fmt"
+	"helm.sh/helm/v3/pkg/chart/loader"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -38,7 +39,6 @@ import (
 	ociRegistry "helm.sh/helm/v3/internal/experimental/registry"
 	"helm.sh/helm/v3/internal/tlsutil"
 	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/repo"
 )
@@ -185,14 +185,21 @@ func (srv *OCIServer) Run(t *testing.T, opts ...OCIServerOpt) {
 		t.Fatal("error removing chart before push")
 	}
 
-	err = registryClient.SaveChart(ch, ref)
+	// save it back to disk..
+	absPath, err := chartutil.Save(ch, srv.Dir)
 	if err != nil {
-		t.Fatal("error saving chart")
+		t.Fatal("could not create chart archive")
 	}
 
-	err = registryClient.PushChartFromCache(ref)
+	// load it into memory...
+	contentBytes, err := ioutil.ReadFile(absPath)
 	if err != nil {
-		t.Fatal("error pushing chart")
+		t.Fatal("could not load chart into memory")
+	}
+
+	err = registryClient.PushChart(contentBytes, ref)
+	if err != nil {
+		t.Fatalf("error pushing dependent chart: %s", err)
 	}
 
 	if cfg.DependingChart != nil {
@@ -202,14 +209,21 @@ func (srv *OCIServer) Run(t *testing.T, opts ...OCIServerOpt) {
 			t.Fatal("error parsing reference for depending chart reference")
 		}
 
-		err = registryClient.SaveChart(c, dependingRef)
+		// save it to disk..
+		absPath, err := chartutil.Save(c, srv.Dir)
 		if err != nil {
-			t.Fatal("error saving depending chart")
+			t.Fatal("could not create chart archive")
 		}
 
-		err = registryClient.PushChartFromCache(dependingRef)
+		// load it into memory...
+		contentBytes, err := ioutil.ReadFile(absPath)
 		if err != nil {
-			t.Fatal("error pushing depending chart")
+			t.Fatal("could not load chart into memory")
+		}
+
+		err = registryClient.PushChart(contentBytes, dependingRef)
+		if err != nil {
+			t.Fatalf("error pushing depending chart: %s", err)
 		}
 	}
 

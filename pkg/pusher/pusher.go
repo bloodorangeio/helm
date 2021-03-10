@@ -47,26 +47,11 @@ type options struct {
 // used when performing Push operations with the Pusher.
 type Option func(*options)
 
-// WithURL informs the pusher the server name that will be used when fetching objects. Used in conjunction with
-// WithTLSClientConfig to set the TLSClientConfig's server name.
-func WithURL(url string) Option {
-	return func(opts *options) {
-		opts.url = url
-	}
-}
-
 // WithBasicAuth sets the request's Authorization header to use the provided credentials
 func WithBasicAuth(username, password string) Option {
 	return func(opts *options) {
 		opts.username = username
 		opts.password = password
-	}
-}
-
-// WithUserAgent sets the request's User-Agent header to use the provided agent name.
-func WithUserAgent(userAgent string) Option {
-	return func(opts *options) {
-		opts.userAgent = userAgent
 	}
 }
 
@@ -86,13 +71,6 @@ func WithTLSClientConfig(certFile, keyFile, caFile string) Option {
 	}
 }
 
-// WithTimeout sets the timeout for requests
-func WithTimeout(timeout time.Duration) Option {
-	return func(opts *options) {
-		opts.timeout = timeout
-	}
-}
-
 func WithTagName(tagname string) Option {
 	return func(opts *options) {
 		opts.version = tagname
@@ -102,12 +80,6 @@ func WithTagName(tagname string) Option {
 func WithRegistryClient(client *registry.Client) Option {
 	return func(opts *options) {
 		opts.registryClient = client
-	}
-}
-
-func WithUntar() Option {
-	return func(opts *options) {
-		opts.unTar = true
 	}
 }
 

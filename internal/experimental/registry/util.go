@@ -20,10 +20,8 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"time"
 
 	orascontext "github.com/deislabs/oras/pkg/context"
-	units "github.com/docker/go-units"
 	"github.com/sirupsen/logrus"
 )
 
@@ -39,19 +37,6 @@ func byteCountBinary(b int64) string {
 		exp++
 	}
 	return fmt.Sprintf("%.1f %ciB", float64(b)/float64(div), "KMGTPE"[exp])
-}
-
-// shortDigest returns first 7 characters of a sha256 digest
-func shortDigest(digest string) string {
-	if len(digest) == 64 {
-		return digest[:7]
-	}
-	return digest
-}
-
-// timeAgo returns a human-readable timestamp representing time that has passed
-func timeAgo(t time.Time) string {
-	return units.HumanDuration(time.Now().UTC().Sub(t))
 }
 
 // ctx retrieves a fresh context.

@@ -26,4 +26,5 @@ func TestConstants(t *testing.T) {
 	knownMediaTypes := KnownMediaTypes()
 	assert.Contains(t, knownMediaTypes, HelmChartConfigMediaType)
 	assert.Contains(t, knownMediaTypes, HelmChartContentLayerMediaType)
+	assert.Contains(t, knownMediaTypes, HelmChartProvenanceLayerMediaType)
 }

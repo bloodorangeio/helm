@@ -47,7 +47,8 @@ func TestDependencyUpdateCmd(t *testing.T) {
 
 	ociChartName := "oci-depending-chart"
 	c := createTestingMetadataForOCI(ociChartName, ociSrv.RegistryURL)
-	if err := chartutil.SaveDir(c, ociSrv.Dir); err != nil {
+	_, err = chartutil.Save(c, ociSrv.Dir)
+	if err != nil {
 		t.Fatal(err)
 	}
 	ociSrv.Run(t, repotest.WithDependingChart(c))

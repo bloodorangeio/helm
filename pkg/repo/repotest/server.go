@@ -204,18 +204,15 @@ func (srv *OCIServer) Run(t *testing.T, opts ...OCIServerOpt) {
 
 	if cfg.DependingChart != nil {
 		c := cfg.DependingChart
-		dependingRef, err := ociRegistry.ParseReference(fmt.Sprintf("%s/u/ocitestuser/oci-depending-chart:1.2.3", srv.RegistryURL))
+		dependingRef, err := ociRegistry.ParseReference(
+			fmt.Sprintf("%s/u/ocitestuser/%s:%s", srv.RegistryURL, c.Metadata.Name, c.Metadata.Version))
 		if err != nil {
 			t.Fatal("error parsing reference for depending chart reference")
 		}
 
-		// save it to disk..
-		absPath, err := chartutil.Save(c, srv.Dir)
-		if err != nil {
-			t.Fatal("could not create chart archive")
-		}
-
 		// load it into memory...
+		absPath := filepath.Join(srv.Dir,
+			fmt.Sprintf("%s-%s.tgz", c.Metadata.Name, c.Metadata.Version))
 		contentBytes, err := ioutil.ReadFile(absPath)
 		if err != nil {
 			t.Fatal("could not load chart into memory")

@@ -24,10 +24,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	auth "github.com/deislabs/oras/pkg/auth/docker"
-	"github.com/deislabs/oras/pkg/content"
-	"github.com/deislabs/oras/pkg/oras"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
+	auth "github.com/oras-project/oras-go/pkg/auth/docker"
+	"github.com/oras-project/oras-go/pkg/content"
+	"github.com/oras-project/oras-go/pkg/oras"
 	"github.com/pkg/errors"
 
 	"helm.sh/helm/v3/pkg/helmpath"

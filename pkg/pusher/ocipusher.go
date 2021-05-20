@@ -71,7 +71,6 @@ func (g *OCIPusher) push(chartRef, href string) error {
 		if err != nil {
 			return err
 		}
-		print(string(provBytes))
 	}
 
 	err = client.PushChart(chartBytes, provBytes, r)

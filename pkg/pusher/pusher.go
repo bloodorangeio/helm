@@ -31,6 +31,7 @@ type options struct {
 	keyFile               string
 	caFile                string
 	insecureSkipVerifyTLS bool
+	withProv              bool
 	username              string
 	password              string
 	version               string
@@ -74,6 +75,12 @@ func WithTagName(tagname string) Option {
 func WithRegistryClient(client *registry.Client) Option {
 	return func(opts *options) {
 		opts.registryClient = client
+	}
+}
+
+func WithProvenance(withProv bool) Option {
+	return func(opts *options) {
+		opts.withProv = withProv
 	}
 }
 

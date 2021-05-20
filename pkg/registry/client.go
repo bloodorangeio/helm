@@ -104,16 +104,21 @@ func (c *Client) Logout(hostname string) error {
 }
 
 // PushChart uploads a chart to a registry.
-func (c *Client) PushChart(bytes []byte, ref *Reference) error {
+func (c *Client) PushChart(chartBytes []byte, provBytes []byte, ref *Reference) error {
 	fmt.Fprintf(c.out, "The push refers to repository [%s]\n", ref.Repo)
 
 	store := content.NewMemoryStore()
-	descriptor := store.Add("", HelmChartContentLayerMediaType, bytes)
+	descriptor := store.Add("", HelmChartContentLayerMediaType, chartBytes)
 
 	// TODO: put Chart.yaml JSON-ified into config
 	config := store.Add("", HelmChartConfigMediaType, []byte("{}"))
 
 	layers := []ocispec.Descriptor{descriptor}
+	if provBytes != nil {
+		provDescriptor := store.Add("", HelmChartProvenanceLayerMediaType, provBytes)
+		layers = append(layers, provDescriptor)
+	}
+
 	_, err := oras.Push(ctx(c.out, c.debug), c.resolver, ref.FullName(), store, layers,
 		oras.WithConfig(config), oras.WithNameValidation(nil))
 	if err != nil {
@@ -127,7 +132,7 @@ func (c *Client) PushChart(bytes []byte, ref *Reference) error {
 
 	// TODO: use actual size of content
 	fmt.Fprintf(c.out,
-		"%s: pushed to remote (%d layer%s, %s total)\n", ref.Tag, 1, s, byteCountBinary(1024))
+		"%s: pushed to remote (%d layer%s, %s total)\n", ref.Tag, numLayers, s, byteCountBinary(1024))
 	return nil
 }
 

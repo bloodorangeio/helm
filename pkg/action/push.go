@@ -35,6 +35,7 @@ type Push struct {
 	Devel       bool
 	Untar       bool
 	VerifyLater bool
+	WithProv    bool
 	UntarDir    string
 	DestDir     string
 	cfg         *Configuration
@@ -74,6 +75,7 @@ func (p *Push) Run(chartRef string, remote string) (string, error) {
 			pusher.WithBasicAuth(p.Username, p.Password),
 			pusher.WithTLSClientConfig(p.CertFile, p.KeyFile, p.CaFile),
 			pusher.WithInsecureSkipVerifyTLS(p.InsecureSkipTLSverify),
+			pusher.WithProvenance(p.WithProv),
 		},
 	}
 

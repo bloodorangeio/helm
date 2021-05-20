@@ -59,11 +59,22 @@ func (g *OCIPusher) push(chartRef, href string) error {
 	}
 	r.Repo = path.Join(r.Repo, meta.Metadata.Name)
 
-	bytes, err := ioutil.ReadFile(chartRef)
+	chartBytes, err := ioutil.ReadFile(chartRef)
 	if err != nil {
 		return err
 	}
-	err = client.PushChart(bytes, r)
+
+	var provBytes []byte
+	if g.opts.withProv {
+		provRef := fmt.Sprintf("%s.prov", chartRef)
+		provBytes, err = ioutil.ReadFile(provRef)
+		if err != nil {
+			return err
+		}
+		print(string(provBytes))
+	}
+
+	err = client.PushChart(chartBytes, provBytes, r)
 	if err != nil {
 		return err
 	}

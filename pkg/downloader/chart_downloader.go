@@ -16,6 +16,7 @@ limitations under the License.
 package downloader
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/url"
@@ -102,8 +103,19 @@ func (c *ChartDownloader) DownloadTo(ref, version, dest string) (string, *proven
 	}
 
 	name := filepath.Base(u.Path)
+
+	var provBody *bytes.Buffer
 	if u.Scheme == "oci" {
 		name = fmt.Sprintf("%s-%s.tgz", name, version)
+
+		// TODO: something about this divider magic?
+		dataAsBytes := data.Bytes()
+		divider := []byte("<--MYSTERIOUSDIVIDER-->")
+		if bytes.Contains(dataAsBytes, divider) {
+			tmp := bytes.Split(dataAsBytes, divider)
+			data = bytes.NewBuffer(tmp[0])
+			provBody = bytes.NewBuffer(tmp[1])
+		}
 	}
 
 	destfile := filepath.Join(dest, name)
@@ -114,16 +126,22 @@ func (c *ChartDownloader) DownloadTo(ref, version, dest string) (string, *proven
 	// If provenance is requested, verify it.
 	ver := &provenance.Verification{}
 	if c.Verify > VerifyNever {
-		body, err := g.Get(u.String() + ".prov")
-		if err != nil {
-			if c.Verify == VerifyAlways {
-				return destfile, ver, errors.Errorf("failed to fetch provenance %q", u.String()+".prov")
+		if provBody == nil {
+			if u.Scheme == "oci" {
+				// Since OCI .prov is fetched at the same time, dont run g.Get here
+				return destfile, ver, errors.Errorf("OCI manifest did not contain provenance layer")
 			}
-			fmt.Fprintf(c.Out, "WARNING: Verification not found for %s: %s\n", ref, err)
-			return destfile, ver, nil
+			provBody, err = g.Get(u.String() + ".prov")
+			if err != nil {
+				if c.Verify == VerifyAlways {
+					return destfile, ver, errors.Errorf("failed to fetch provenance %q", u.String()+".prov")
+				}
+				fmt.Fprintf(c.Out, "WARNING: Verification not found for %s: %s\n", ref, err)
+				return destfile, ver, nil
+			}
 		}
 		provfile := destfile + ".prov"
-		if err := fileutil.AtomicWriteFile(provfile, body, 0644); err != nil {
+		if err := fileutil.AtomicWriteFile(provfile, provBody, 0644); err != nil {
 			return destfile, nil, err
 		}
 

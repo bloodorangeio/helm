@@ -163,12 +163,14 @@ func (c *Client) PullChart(ref *Reference) (*bytes.Buffer, error) {
 	}
 
 	var contentLayer *ocispec.Descriptor
+	var provLayer *ocispec.Descriptor
 	for _, layer := range layerDescriptors {
 		layer := layer
 		switch layer.MediaType {
 		case HelmChartContentLayerMediaType:
 			contentLayer = &layer
-
+		case HelmChartProvenanceLayerMediaType:
+			provLayer = &layer
 		}
 	}
 
@@ -182,7 +184,24 @@ func (c *Client) PullChart(ref *Reference) (*bytes.Buffer, error) {
 	if !ok {
 		return buf, errors.Errorf("Unable to retrieve blob with digest %s", contentLayer.Digest)
 	}
-
 	buf = bytes.NewBuffer(b)
+
+	if provLayer != nil {
+		_, bb, ok := store.Get(*provLayer)
+		if !ok {
+			return buf, errors.Errorf("Unable to retrieve blob with digest %s", contentLayer.Digest)
+		}
+
+		_, err = buf.Write([]byte("<--MYSTERIOUSDIVIDER-->"))
+		if err != nil {
+			return buf, err
+		}
+
+		_, err = buf.Write(bb)
+		if err != nil {
+			return buf, err
+		}
+	}
+
 	return buf, nil
 }

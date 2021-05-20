@@ -170,6 +170,7 @@ func (c *Client) PullChart(ref *Reference) (*bytes.Buffer, error) {
 		case HelmChartContentLayerMediaType:
 			contentLayer = &layer
 		case HelmChartProvenanceLayerMediaType:
+			fmt.Fprintf(c.out, "Note: provenance layer detected")
 			provLayer = &layer
 		}
 	}
@@ -189,7 +190,7 @@ func (c *Client) PullChart(ref *Reference) (*bytes.Buffer, error) {
 	if provLayer != nil {
 		_, bb, ok := store.Get(*provLayer)
 		if !ok {
-			return buf, errors.Errorf("Unable to retrieve blob with digest %s", contentLayer.Digest)
+			return buf, errors.Errorf("Unable to retrieve blob with digest %s", provLayer.Digest)
 		}
 
 		_, err = buf.Write([]byte("<--MYSTERIOUSDIVIDER-->"))

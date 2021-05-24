@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -111,7 +112,7 @@ func (c *Client) PushChart(chartBytes []byte, provBytes []byte, ref *Reference) 
 	descriptor := store.Add("", HelmChartContentLayerMediaType, chartBytes)
 
 	// TODO: put Chart.yaml JSON-ified into config
-	config := store.Add("", HelmChartConfigMediaType, []byte("{}"))
+	config := store.Add("", HelmChartConfigMediaType, []byte(fmt.Sprintf("{\"random\": \"%d\"}", rand.Int())))
 
 	layers := []ocispec.Descriptor{descriptor}
 	if provBytes != nil {

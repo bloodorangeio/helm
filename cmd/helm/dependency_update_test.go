@@ -130,6 +130,10 @@ func TestDependencyUpdateCmd(t *testing.T) {
 	}
 
 	// test for OCI charts
+	err = chartutil.SaveDir(c, dir())
+	if err != nil {
+		t.Fatal(err)
+	}
 	cmd := fmt.Sprintf("dependency update '%s' --repository-config %s --repository-cache %s --registry-config %s/config.json",
 		dir(ociChartName),
 		dir("repositories.yaml"),

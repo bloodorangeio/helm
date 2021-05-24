@@ -197,7 +197,7 @@ func (srv *OCIServer) Run(t *testing.T, opts ...OCIServerOpt) {
 		t.Fatal("could not load chart into memory")
 	}
 
-	err = registryClient.PushChart(contentBytes, ref)
+	err = registryClient.PushChart(contentBytes, nil, ref)
 	if err != nil {
 		t.Fatalf("error pushing dependent chart: %s", err)
 	}
@@ -218,7 +218,7 @@ func (srv *OCIServer) Run(t *testing.T, opts ...OCIServerOpt) {
 			t.Fatal("could not load chart into memory")
 		}
 
-		err = registryClient.PushChart(contentBytes, dependingRef)
+		err = registryClient.PushChart(contentBytes, nil, dependingRef)
 		if err != nil {
 			t.Fatalf("error pushing depending chart: %s", err)
 		}

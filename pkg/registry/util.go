@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"io"
 
-	orascontext "github.com/deislabs/oras/pkg/context"
+	orascontext "github.com/oras-project/oras-go/pkg/context"
 	"github.com/sirupsen/logrus"
 )
 

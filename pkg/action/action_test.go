@@ -23,7 +23,7 @@ import (
 	"os"
 	"testing"
 
-	dockerauth "github.com/deislabs/oras/pkg/auth/docker"
+	dockerauth "github.com/oras-project/oras-go/pkg/auth/docker"
 	fakeclientset "k8s.io/client-go/kubernetes/fake"
 
 	"helm.sh/helm/v3/pkg/chart"

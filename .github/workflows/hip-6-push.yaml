@@ -1,0 +1,19 @@
+name: hip-6-push
+
+on:
+  push:
+    branches:
+      - hip-6-push
+  pull_request:
+    branches:
+      - hip-6-push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout source code
+        uses: actions/checkout@v2
+      - name: run unit tests
+        run: |
+          make test-unit

@@ -16,13 +16,17 @@ limitations under the License.
 
 package registryx // import "helm.sh/helm/v3/pkg/registry"
 
-const (
-	// HelmChartConfigMediaType is the reserved media type for the Helm chart manifest config
-	HelmChartConfigMediaType = "application/vnd.cncf.helm.config.v1+json"
+type (
+	pushOption func(*pushOperation)
 
-	// HelmChartContentLayerMediaType is the reserved media type for Helm chart package content
-	HelmChartContentLayerMediaType = "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
-
-	// HelmChartProvenanceLayerMediaType is the reserved media type for Helm chart provenance files
-	HelmChartProvenanceLayerMediaType = "application/vnd.cncf.helm.chart.provenance.v1.prov"
+	pushOperation struct {
+		provData []byte
+	}
 )
+
+// PushOptProvData returns a function that sets the prov bytes setting on push
+func PushOptProvData(provData []byte) pushOption {
+	return func(operation *pushOperation) {
+		operation.provData = provData
+	}
+}

@@ -28,11 +28,6 @@ import (
 	"helm.sh/helm/v3/pkg/helmpath"
 )
 
-const (
-	// CredentialsFileBasename is the filename for auth credentials file
-	CredentialsFileBasename = "config.json"
-)
-
 type (
 	// Client works with OCI-compliant registries
 	Client struct {
@@ -46,12 +41,12 @@ type (
 )
 
 // NewClient returns a new registry client with config
-func NewClient(opts ...ClientOption) (*Client, error) {
+func NewClient(options ...ClientOption) (*Client, error) {
 	client := &Client{
 		out: ioutil.Discard,
 	}
-	for _, opt := range opts {
-		opt(client)
+	for _, option := range options {
+		option(client)
 	}
 	// set defaults if fields are missing
 	if client.credentialsFile == "" {

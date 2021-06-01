@@ -17,8 +17,7 @@ limitations under the License.
 package registryx // import "helm.sh/helm/v3/pkg/registry"
 
 type (
-	// PullOption allows specifying various settings on pull
-	PullOption func(*pullOperation)
-
-	pullOperation struct{}
+	loginResult struct {
+		Host string
+	}
 )

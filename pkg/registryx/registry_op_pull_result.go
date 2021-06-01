@@ -16,11 +16,21 @@ limitations under the License.
 
 package registryx // import "helm.sh/helm/v3/pkg/registry"
 
-// Logout logs out of a registry
-func (c *Client) Logout(hostname string, opts ...LogoutOption) error {
-	operation := &logoutOperation{}
-	for _, opt := range opts {
-		opt(operation)
+type (
+	pullResult struct {
+		Chart    *descriptorPullSummary
+		Prov     *descriptorPullSummary
+		Manifest *manifestPullSummary
 	}
-	return c.authorizer.Logout(ctx(c.out, c.debug), hostname)
-}
+
+	descriptorPullSummary struct {
+		Data   []byte
+		Digest string
+		Size   int64
+	}
+
+	manifestPullSummary struct {
+		Digest string
+		Size   int64
+	}
+)

@@ -16,18 +16,19 @@ limitations under the License.
 
 package registryx // import "helm.sh/helm/v3/pkg/registry"
 
-type (
-	// PushOption allows specifying various settings on push
-	PushOption func(*pushOperation)
-
-	pushOperation struct {
-		provBytes []byte
-    }
-)
-
-// PushOptProvBytes returns a function that sets the prov bytes setting on push
-func PushOptProvBytes(provBytes []byte) PushOption {
-	return func(operation *pushOperation) {
-		operation.provBytes = provBytes
+// Login logs into a registry
+func (c *Client) Login(host string, options ...loginOption) (*loginResult, error) {
+	operation := &loginOperation{}
+	for _, option := range options {
+		option(operation)
 	}
+	err := c.authorizer.Login(ctx(c.out, c.debug),
+		host, operation.username, operation.password, operation.insecure)
+	if err != nil {
+		return nil, err
+	}
+	result := &loginResult{
+		Host: host,
+	}
+	return result, nil
 }

@@ -16,11 +16,18 @@ limitations under the License.
 
 package registryx // import "helm.sh/helm/v3/pkg/registry"
 
-// Login logs into a registry
-func (c *Client) Login(hostname string, username string, password string, opts ...LoginOption) error {
-	operation := &loginOperation{}
+// Logout logs out of a registry
+func (c *Client) Logout(host string, opts ...LogoutOption) (*logoutResult, error) {
+	operation := &logoutOperation{}
 	for _, opt := range opts {
 		opt(operation)
 	}
-	return c.authorizer.Login(ctx(c.out, c.debug), hostname, username, password, operation.insecure)
+	err := c.authorizer.Logout(ctx(c.out, c.debug), host)
+	if err != nil {
+		return nil, err
+	}
+	result := &logoutResult{
+		Host: host,
+	}
+	return result, nil
 }

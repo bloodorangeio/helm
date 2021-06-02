@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"helm.sh/helm/v3/pkg/registry"
+	registry "helm.sh/helm/v3/pkg/registryx"
 )
 
 // OCIGetter is the default HTTP(/S) backend handler
@@ -44,17 +44,12 @@ func (g *OCIGetter) get(href string) (*bytes.Buffer, error) {
 		ref = fmt.Sprintf("%s:%s", ref, version)
 	}
 
-	r, err := registry.ParseReference(ref)
+	result, err := client.Pull(ref)
 	if err != nil {
 		return nil, err
 	}
 
-	buf, err := client.PullChart(r)
-	if err != nil {
-		return nil, err
-	}
-
-	return buf, nil
+	return bytes.NewBuffer(result.Chart.Data), nil
 }
 
 // NewOCIGetter constructs a valid http/https client as a Getter

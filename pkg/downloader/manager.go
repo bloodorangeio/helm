@@ -42,7 +42,7 @@ import (
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/helmpath"
-	"helm.sh/helm/v3/pkg/registry"
+	registry "helm.sh/helm/v3/pkg/registryx"
 	"helm.sh/helm/v3/pkg/repo"
 )
 

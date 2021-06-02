@@ -22,7 +22,7 @@ import (
 	"github.com/pkg/errors"
 
 	"helm.sh/helm/v3/pkg/pusher"
-	"helm.sh/helm/v3/pkg/registry"
+	registry "helm.sh/helm/v3/pkg/registryx"
 )
 
 // ChartUploader handles uploading a chart.

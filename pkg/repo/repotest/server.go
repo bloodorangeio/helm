@@ -30,7 +30,6 @@ import (
 	"github.com/docker/distribution/registry"
 	_ "github.com/docker/distribution/registry/auth/htpasswd"           // used for docker test registry
 	_ "github.com/docker/distribution/registry/storage/driver/inmemory" // used for docker test registry
-	auth "github.com/oras-project/oras-go/pkg/auth/docker"
 	"github.com/phayes/freeport"
 	"golang.org/x/crypto/bcrypt"
 	"sigs.k8s.io/yaml"
@@ -39,7 +38,7 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
-	ociRegistry "helm.sh/helm/v3/pkg/registry"
+	ociRegistry "helm.sh/helm/v3/pkg/registryx"
 	"helm.sh/helm/v3/pkg/repo"
 )
 
@@ -134,40 +133,25 @@ func (srv *OCIServer) Run(t *testing.T, opts ...OCIServerOpt) {
 
 	credentialsFile := filepath.Join(srv.Dir, "config.json")
 
-	client, err := auth.NewClient(credentialsFile)
-	if err != nil {
-		t.Fatalf("error creating auth client")
-	}
-
-	resolver, err := client.Resolver(context.Background(), http.DefaultClient, false)
-	if err != nil {
-		t.Fatalf("error creating resolver")
-	}
-
 	// init test client
 	registryClient, err := ociRegistry.NewClient(
 		ociRegistry.ClientOptDebug(true),
 		ociRegistry.ClientOptWriter(os.Stdout),
-		ociRegistry.ClientOptAuthorizer(&ociRegistry.Authorizer{
-			Client: client,
-		}),
-		ociRegistry.ClientOptResolver(&ociRegistry.Resolver{
-			Resolver: resolver,
-		}),
+		ociRegistry.ClientOptCredentialsFile(credentialsFile),
 	)
 	if err != nil {
 		t.Fatalf("error creating registry client")
 	}
 
-	err = registryClient.Login(srv.RegistryURL, srv.TestUsername, srv.TestPassword, false)
+	_, err = registryClient.Login(
+		srv.RegistryURL,
+		ociRegistry.LoginOptBasicAuth(srv.TestUsername, srv.TestPassword),
+		ociRegistry.LoginOptInsecure(false))
 	if err != nil {
 		t.Fatalf("error logging into registry with good credentials")
 	}
 
-	ref, err := ociRegistry.ParseReference(fmt.Sprintf("%s/u/ocitestuser/oci-dependent-chart:0.1.0", srv.RegistryURL))
-	if err != nil {
-		t.Fatalf("")
-	}
+	ref := fmt.Sprintf("%s/u/ocitestuser/oci-dependent-chart:0.1.0", srv.RegistryURL)
 
 	err = chartutil.ExpandFile(srv.Dir, filepath.Join(srv.Dir, "oci-dependent-chart-0.1.0.tgz"))
 	if err != nil {
@@ -197,18 +181,15 @@ func (srv *OCIServer) Run(t *testing.T, opts ...OCIServerOpt) {
 		t.Fatal("could not load chart into memory")
 	}
 
-	err = registryClient.PushChart(contentBytes, nil, ref)
+	_, err = registryClient.Push(contentBytes, ref)
 	if err != nil {
 		t.Fatalf("error pushing dependent chart: %s", err)
 	}
 
 	if cfg.DependingChart != nil {
 		c := cfg.DependingChart
-		dependingRef, err := ociRegistry.ParseReference(
-			fmt.Sprintf("%s/u/ocitestuser/%s:%s", srv.RegistryURL, c.Metadata.Name, c.Metadata.Version))
-		if err != nil {
-			t.Fatal("error parsing reference for depending chart reference")
-		}
+		dependingRef := fmt.Sprintf("%s/u/ocitestuser/%s:%s",
+			srv.RegistryURL, c.Metadata.Name, c.Metadata.Version)
 
 		// load it into memory...
 		absPath := filepath.Join(srv.Dir,
@@ -218,7 +199,7 @@ func (srv *OCIServer) Run(t *testing.T, opts ...OCIServerOpt) {
 			t.Fatal("could not load chart into memory")
 		}
 
-		err = registryClient.PushChart(contentBytes, nil, dependingRef)
+		_, err = registryClient.Push(contentBytes, dependingRef)
 		if err != nil {
 			t.Fatalf("error pushing depending chart: %s", err)
 		}

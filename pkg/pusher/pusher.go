@@ -20,7 +20,7 @@ import (
 	"github.com/pkg/errors"
 
 	"helm.sh/helm/v3/pkg/cli"
-	"helm.sh/helm/v3/pkg/registry"
+	registry "helm.sh/helm/v3/pkg/registryx"
 )
 
 // options are generic parameters to be provided to the pusher during instantiation.

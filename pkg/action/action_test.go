@@ -16,20 +16,17 @@ limitations under the License.
 package action
 
 import (
-	"context"
 	"flag"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"testing"
 
-	dockerauth "github.com/oras-project/oras-go/pkg/auth/docker"
 	fakeclientset "k8s.io/client-go/kubernetes/fake"
 
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
-	"helm.sh/helm/v3/pkg/registry"
+	registry "helm.sh/helm/v3/pkg/registryx"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
@@ -41,16 +38,6 @@ var verbose = flag.Bool("test.log", false, "enable test logging")
 func actionConfigFixture(t *testing.T) *Configuration {
 	t.Helper()
 
-	client, err := dockerauth.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	resolver, err := client.Resolver(context.Background(), http.DefaultClient, false)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	tdir, err := ioutil.TempDir("", "helm-action-test")
 	if err != nil {
 		t.Fatal(err)
@@ -58,14 +45,7 @@ func actionConfigFixture(t *testing.T) *Configuration {
 
 	t.Cleanup(func() { os.RemoveAll(tdir) })
 
-	registryClient, err := registry.NewClient(
-		registry.ClientOptAuthorizer(&registry.Authorizer{
-			Client: client,
-		}),
-		registry.ClientOptResolver(&registry.Resolver{
-			Resolver: resolver,
-		}),
-	)
+	registryClient, err := registry.NewClient()
 	if err != nil {
 		t.Fatal(err)
 	}

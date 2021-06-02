@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/registry"
+	registry "helm.sh/helm/v3/pkg/registryx"
 )
 
 // OCIPusher is the default OCI backend handler
@@ -46,24 +46,19 @@ func (g *OCIPusher) push(chartRef, href string) error {
 
 	client := g.opts.registryClient
 
-	ref := strings.TrimPrefix(href, "oci://")
+	ref := path.Join(strings.TrimPrefix(href, "oci://"), meta.Metadata.Name)
 	if version := g.opts.version; version != "" {
 		ref = fmt.Sprintf("%s:%s", ref, version)
 	} else {
 		ref = fmt.Sprintf("%s:%s", ref, meta.Metadata.Version)
 	}
 
-	r, err := registry.ParseReference(ref)
-	if err != nil {
-		return err
-	}
-	r.Repo = path.Join(r.Repo, meta.Metadata.Name)
-
 	chartBytes, err := ioutil.ReadFile(chartRef)
 	if err != nil {
 		return err
 	}
 
+	var pushOpts []registry.PushOption
 	var provBytes []byte
 	if g.opts.withProv {
 		provRef := fmt.Sprintf("%s.prov", chartRef)
@@ -71,9 +66,10 @@ func (g *OCIPusher) push(chartRef, href string) error {
 		if err != nil {
 			return err
 		}
+		pushOpts = append(pushOpts, registry.PushOptProvData(provBytes))
 	}
 
-	err = client.PushChart(chartBytes, provBytes, r)
+	_, err = client.Push(chartBytes, ref, pushOpts...)
 	if err != nil {
 		return err
 	}

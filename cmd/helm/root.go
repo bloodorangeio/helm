@@ -30,7 +30,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/registry"
+	registry "helm.sh/helm/v3/pkg/registryx"
 	"helm.sh/helm/v3/pkg/repo"
 )
 

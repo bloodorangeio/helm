@@ -17,7 +17,8 @@ limitations under the License.
 package registryx // import "helm.sh/helm/v3/pkg/registry"
 
 type (
-	pullOption func(*pullOperation)
+	// PullOption allows specifying various settings on pull
+	PullOption func(*pullOperation)
 
 	pullOperation struct {
 		withChart         bool
@@ -27,21 +28,21 @@ type (
 )
 
 // PullOptWithChart returns a function that sets the withChart setting on pull
-func PullOptWithChart(withChart bool) pullOption {
+func PullOptWithChart(withChart bool) PullOption {
 	return func(operation *pullOperation) {
 		operation.withChart = withChart
 	}
 }
 
 // PullOptWithProv returns a function that sets the withProv setting on pull
-func PullOptWithProv(withProv bool) pullOption {
+func PullOptWithProv(withProv bool) PullOption {
 	return func(operation *pullOperation) {
 		operation.withProv = withProv
 	}
 }
 
 // PullOptIgnoreMissingProv returns a function that sets the ignoreMissingProv setting on pull
-func PullOptIgnoreMissingProv(ignoreMissingProv bool) pullOption {
+func PullOptIgnoreMissingProv(ignoreMissingProv bool) PullOption {
 	return func(operation *pullOperation) {
 		operation.ignoreMissingProv = ignoreMissingProv
 	}

@@ -17,50 +17,57 @@ limitations under the License.
 package registryx // import "helm.sh/helm/v3/pkg/registry"
 
 import (
-	"fmt"
-	"math/rand"
-	"path"
-
+	"encoding/json"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/oras-project/oras-go/pkg/content"
 	"github.com/oras-project/oras-go/pkg/oras"
 )
 
 // Push uploads a chart to a registry.
-func (c *Client) Push(chartData []byte, parent string, options ...pushOption) (*pushResult, error) {
+func (c *Client) Push(data []byte, ref string, options ...PushOption) (*pushResult, error) {
 	operation := &pushOperation{}
 	for _, option := range options {
 		option(operation)
 	}
 	store := content.NewMemoryStore()
-	descriptor := store.Add("", HelmChartContentLayerMediaType, chartData)
-
-	// TODO: put Chart.yaml JSON-ified into config
-	config := store.Add("", HelmChartConfigMediaType, []byte(fmt.Sprintf("{\"random\": \"%d\"}", rand.Int())))
-
+	descriptor := store.Add("", ChartLayerMediaType, data)
+	meta, err := extractChartMeta(data)
+	if err != nil {
+		return nil, err
+	}
+	configData, err := json.Marshal(meta)
+	config := store.Add("", ConfigMediaType, configData)
 	layers := []ocispec.Descriptor{descriptor}
+	var provDescriptor ocispec.Descriptor
 	if operation.provData != nil {
-		provDescriptor := store.Add("", HelmChartProvenanceLayerMediaType, operation.provData)
+		provDescriptor = store.Add("", ProvLayerMediaType, operation.provData)
 		layers = append(layers, provDescriptor)
 	}
-	ref := fmt.Sprintf("%s:%s", path.Join(parent, "mychart"), "0.1.0")
 	manifest, err := oras.Push(ctx(c.out, c.debug), c.resolver, ref, store, layers,
 		oras.WithConfig(config), oras.WithNameValidation(nil))
 	if err != nil {
 		return nil, err
 	}
-	manifestDigest := manifest.Digest.String()
 	result := &pushResult{
+		Manifest: &descriptorPushSummary{
+			Digest: manifest.Digest.String(),
+			Size:   manifest.Size,
+		},
+		Config: &descriptorPushSummary{
+			Digest: config.Digest.String(),
+			Size:   config.Size,
+		},
 		Chart: &descriptorPushSummary{
 			Digest: descriptor.Digest.String(),
 			Size:   descriptor.Size,
 		},
-		Manifest: &manifestPushSummary{
-			Digest: manifestDigest,
-			Size:   manifest.Size,
-		},
-		Ref: ref,
-		RefWithDigest: fmt.Sprintf("%s@%s", ref, manifestDigest),
+		Prov: &descriptorPushSummary{}, // prevent nil references
+	}
+	if operation.provData != nil {
+		result.Prov = &descriptorPushSummary{
+			Digest: provDescriptor.Digest.String(),
+			Size:   provDescriptor.Size,
+		}
 	}
 	return result, err
 }

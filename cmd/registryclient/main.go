@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 
 	rx "helm.sh/helm/v3/pkg/registryx"
 )
@@ -35,6 +34,20 @@ func main() {
 		usage()
 	}
 
+	// Load raw chart .tgz
+	chartData, err := ioutil.ReadFile(chartPath)
+	check(err)
+
+	// Load associated .prov file if present
+	var provData []byte
+	var hasProv bool
+	provPath := fmt.Sprintf("%s.prov", chartPath)
+	if _, err := os.Stat(provPath); err == nil {
+		provData, err = ioutil.ReadFile(provPath)
+		check(err)
+		hasProv = true
+	}
+
 	// Create client
 	client, err := rx.NewClient()
 	check(err)
@@ -43,14 +56,28 @@ func main() {
 	_, err = client.Login(host, rx.LoginOptBasicAuth(user, pass))
 	check(err)
 
-	// Load chart
-	chartData, err := ioutil.ReadFile(chartPath)
+	// Build a valid Helm OCI reference
+	ref, err := rx.BuildRefFromChartData(host, namespace, chartData)
 	check(err)
 
-	// Push chart
-	result, err := client.Push(chartData, path.Join(host, namespace))
-	check(err)
+	// Build options for push operation
+	var pushOpts []rx.PushOption
+	if hasProv {
+		pushOpts = append(pushOpts, rx.PushOptProvData(provData))
+	}
 
-	fmt.Printf("Pushed %s\n", result.Ref)
-	fmt.Printf("Pushed %s\n", result.RefWithDigest)
+	// Push chart (and prov if specified)
+	fmt.Printf("Attempting push to %s ...\n", ref)
+	result, err := client.Push(chartData, ref, pushOpts...)
+	check(err)
+	fmt.Printf("Manifest digest:    %s\n", result.Manifest.Digest)
+	fmt.Printf("Manifest size:      %d\n", result.Manifest.Size)
+	fmt.Printf("Config digest:      %s\n", result.Config.Digest)
+	fmt.Printf("Config size:        %d\n", result.Config.Size)
+	fmt.Printf("Chart layer digest: %s\n", result.Chart.Digest)
+	fmt.Printf("Chart layer size:   %d\n", result.Chart.Size)
+	if hasProv {
+		fmt.Printf("Prov layer digest:  %s\n", result.Prov.Digest)
+		fmt.Printf("Prov layer size:    %d\n", result.Prov.Size)
+	}
 }

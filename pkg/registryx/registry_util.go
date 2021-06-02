@@ -18,11 +18,47 @@ package registryx // import "helm.sh/helm/v3/pkg/registry"
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
+	"path"
 
 	orascontext "github.com/oras-project/oras-go/pkg/context"
 	"github.com/sirupsen/logrus"
+
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
 )
+
+// BuildRefFromChartData generates an OCI reference recommended for
+// Helm charts stored in an OCI registry, in the form
+// of <host>/<parent>/<chart_name>:<chart_version>
+func BuildRefFromChartData(host string, parent string, chartData []byte) (string, error) {
+	meta, err := extractChartMeta(chartData)
+	if err != nil {
+		return "", err
+	}
+	ref := fmt.Sprintf("%s:%s", path.Join(host, parent, meta.Name), meta.Version)
+	return ref, nil
+}
+
+// extractChartMeta is used to extract a chart metadata from a byte array
+// that is loaded from a chart .tgz. Currently it is necessary to create a
+// temporary file with the .tgz contents in order to use chartutil.LoadChartfile
+func extractChartMeta(chartData []byte) (*chart.Metadata, error) {
+	tmpFile, err := ioutil.TempFile(os.TempDir(), "helm-oci-extract-")
+	if err != nil {
+		return nil, err
+	}
+	defer os.Remove(tmpFile.Name())
+	tmpFile.Write(chartData)
+	ch, err := loader.Load(tmpFile.Name())
+	if err != nil {
+		return nil, err
+	}
+	return ch.Metadata, nil
+}
 
 // ctx retrieves a fresh context.
 // disable verbose logging coming from ORAS (unless debug is enabled)

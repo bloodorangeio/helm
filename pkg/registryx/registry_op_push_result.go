@@ -18,20 +18,14 @@ package registryx // import "helm.sh/helm/v3/pkg/registry"
 
 type (
 	pushResult struct {
-		Chart         *descriptorPushSummary
-		Prov          *descriptorPushSummary
-		Manifest      *manifestPushSummary
-		Ref           string
-		RefWithDigest string
+		Manifest *descriptorPushSummary `json:"manifest"`
+		Config   *descriptorPushSummary `json:"config"`
+		Chart    *descriptorPushSummary `json:"chart"`
+		Prov     *descriptorPushSummary `json:"prov"`
 	}
 
 	descriptorPushSummary struct {
-		Digest string
-		Size   int64
-	}
-
-	manifestPushSummary struct {
-		Digest string
-		Size   int64
+		Digest string `json:"digest"`
+		Size   int64  `json:"size"`
 	}
 )

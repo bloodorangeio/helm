@@ -18,7 +18,7 @@ package registryx // import "helm.sh/helm/v3/pkg/registry"
 
 type (
 	// LoginOption allows specifying various settings on login
-	loginOption func(*loginOperation)
+	LoginOption func(*loginOperation)
 
 	loginOperation struct{
 		username string
@@ -28,7 +28,7 @@ type (
 )
 
 // LoginOptBasicAuth returns a function that sets the username/password settings on login
-func LoginOptBasicAuth(username string, password string) loginOption {
+func LoginOptBasicAuth(username string, password string) LoginOption {
 	return func(operation *loginOperation) {
 		operation.username = username
 		operation.password = password
@@ -36,7 +36,7 @@ func LoginOptBasicAuth(username string, password string) loginOption {
 }
 
 // LoginOptInsecure returns a function that sets the insecure setting on login
-func LoginOptInsecure(insecure bool) loginOption {
+func LoginOptInsecure(insecure bool) LoginOption {
 	return func(operation *loginOperation) {
 		operation.insecure = insecure
 	}

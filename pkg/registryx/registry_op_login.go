@@ -17,7 +17,7 @@ limitations under the License.
 package registryx // import "helm.sh/helm/v3/pkg/registry"
 
 // Login logs into a registry
-func (c *Client) Login(host string, options ...loginOption) (*loginResult, error) {
+func (c *Client) Login(host string, options ...LoginOption) (*loginResult, error) {
 	operation := &loginOperation{}
 	for _, option := range options {
 		option(operation)

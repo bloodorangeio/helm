@@ -26,7 +26,7 @@ import (
 )
 
 // Pull downloads a chart from a registry
-func (c *Client) Pull(ref string, options ...pullOption) (*pullResult, error) {
+func (c *Client) Pull(ref string, options ...PullOption) (*pullResult, error) {
 	operation := &pullOperation{
 		withChart: true, // By default, always download the chart layer
 	}
@@ -39,18 +39,18 @@ func (c *Client) Pull(ref string, options ...pullOption) (*pullResult, error) {
 	}
 	store := content.NewMemoryStore()
 	allowedMediaTypes := []string{
-		HelmChartConfigMediaType,
+		ConfigMediaType,
 	}
 	minNumLayers := 0
 	if operation.withChart {
 		minNumLayers += 1
-		allowedMediaTypes = append(allowedMediaTypes, HelmChartContentLayerMediaType)
+		allowedMediaTypes = append(allowedMediaTypes, ChartLayerMediaType)
 	}
 	if operation.withProv {
 		if !operation.ignoreMissingProv {
 			minNumLayers += 1
 		}
-		allowedMediaTypes = append(allowedMediaTypes, HelmChartProvenanceLayerMediaType)
+		allowedMediaTypes = append(allowedMediaTypes, ProvLayerMediaType)
 	}
 	manifest, layerDescriptors, err := oras.Pull(ctx(c.out, c.debug), c.resolver, ref, store,
 		oras.WithPullEmptyNameAllowed(),
@@ -60,29 +60,25 @@ func (c *Client) Pull(ref string, options ...pullOption) (*pullResult, error) {
 	}
 	numLayers := len(layerDescriptors)
 	if numLayers < minNumLayers {
-		s := ""
-		if minNumLayers > 1 {
-			s = "s"
-		}
 		return nil, errors.New(
-			fmt.Sprintf("manifest does not contain at least %d layer%s (total: %d)",
-				minNumLayers, s, numLayers))
+			fmt.Sprintf("manifest does not contain minimum number of layers (%d), layers found: %d",
+				minNumLayers, numLayers))
 	}
 	var chartLayer *ocispec.Descriptor
 	var provLayer *ocispec.Descriptor
 	for _, layer := range layerDescriptors {
 		layer := layer
 		switch layer.MediaType {
-		case HelmChartContentLayerMediaType:
+		case ChartLayerMediaType:
 			chartLayer = &layer
-		case HelmChartProvenanceLayerMediaType:
+		case ProvLayerMediaType:
 			provLayer = &layer
 		}
 	}
 	if operation.withChart && chartLayer == nil {
 		return nil, errors.New(
 			fmt.Sprintf("manifest does not contain a layer with mediatype %s",
-				HelmChartContentLayerMediaType))
+				ChartLayerMediaType))
 	}
 	var provMissing bool
 	if operation.withProv && provLayer == nil {
@@ -91,7 +87,7 @@ func (c *Client) Pull(ref string, options ...pullOption) (*pullResult, error) {
 		} else {
 			return nil, errors.New(
 				fmt.Sprintf("manifest does not contain a layer with mediatype %s",
-					HelmChartContentLayerMediaType))
+					ProvLayerMediaType))
 		}
 	}
 	var chartData []byte

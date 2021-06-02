@@ -17,7 +17,8 @@ limitations under the License.
 package registryx // import "helm.sh/helm/v3/pkg/registry"
 
 type (
-	pushOption func(*pushOperation)
+	// PushOption allows specifying various settings on push
+	PushOption func(*pushOperation)
 
 	pushOperation struct {
 		provData []byte
@@ -25,7 +26,7 @@ type (
 )
 
 // PushOptProvData returns a function that sets the prov bytes setting on push
-func PushOptProvData(provData []byte) pushOption {
+func PushOptProvData(provData []byte) PushOption {
 	return func(operation *pushOperation) {
 		operation.provData = provData
 	}

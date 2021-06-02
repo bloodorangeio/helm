@@ -17,7 +17,5 @@ limitations under the License.
 package registryx // import "helm.sh/helm/v3/pkg/registry"
 
 type (
-	loginResult struct {
-		Host string
-	}
+	loginResult struct{}
 )

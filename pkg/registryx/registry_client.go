@@ -25,6 +25,7 @@ import (
 	"github.com/containerd/containerd/remotes"
 	"github.com/oras-project/oras-go/pkg/auth"
 	dockerauth "github.com/oras-project/oras-go/pkg/auth/docker"
+
 	"helm.sh/helm/v3/pkg/helmpath"
 )
 

@@ -107,9 +107,9 @@ func (c *Client) Pull(ref string, options ...PullOption) (*pullResult, error) {
 		}
 	}
 	result := &pullResult{
-		Chart: &descriptorPullSummary{},
-		Prov:  &descriptorPullSummary{},
-		Manifest: &manifestPullSummary{
+		Chart: &descriptorPullSummary{}, // prevent nil references
+		Prov:  &descriptorPullSummary{}, // prevent nil references
+		Manifest: &descriptorPullSummary{
 			Digest: manifest.Digest.String(),
 			Size:   manifest.Size,
 		},

@@ -26,8 +26,6 @@ func (c *Client) Logout(host string, opts ...LogoutOption) (*logoutResult, error
 	if err != nil {
 		return nil, err
 	}
-	result := &logoutResult{
-		Host: host,
-	}
+	result := &logoutResult{} // no fields for now
 	return result, nil
 }

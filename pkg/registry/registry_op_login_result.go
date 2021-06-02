@@ -14,10 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package registryx // import "helm.sh/helm/v3/pkg/registry"
+package registry // import "helm.sh/helm/v3/pkg/registry"
 
 type (
-	logoutResult struct {
+	loginResult struct {
 		Host string `json:"host"`
 	}
 )

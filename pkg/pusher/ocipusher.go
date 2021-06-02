@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"helm.sh/helm/v3/pkg/chart/loader"
-	registry "helm.sh/helm/v3/pkg/registryx"
+	"helm.sh/helm/v3/pkg/registry"
 )
 
 // OCIPusher is the default OCI backend handler

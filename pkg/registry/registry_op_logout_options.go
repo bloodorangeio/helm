@@ -14,20 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package registryx // import "helm.sh/helm/v3/pkg/registry"
+package registry // import "helm.sh/helm/v3/pkg/registry"
 
-// Logout logs out of a registry
-func (c *Client) Logout(host string, opts ...LogoutOption) (*logoutResult, error) {
-	operation := &logoutOperation{}
-	for _, opt := range opts {
-		opt(operation)
-	}
-	err := c.authorizer.Logout(ctx(c.out, c.debug), host)
-	if err != nil {
-		return nil, err
-	}
-	result := &logoutResult{
-		Host: host,
-	}
-	return result, nil
-}
+type (
+	// LogoutOption allows specifying various settings on logout
+	LogoutOption func(*logoutOperation)
+
+	logoutOperation struct{}
+)

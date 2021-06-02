@@ -14,11 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package registryx // import "helm.sh/helm/v3/pkg/registry"
+package registry // import "helm.sh/helm/v3/pkg/registry"
 
 type (
-	// LogoutOption allows specifying various settings on logout
-	LogoutOption func(*logoutOperation)
+	// PushOption allows specifying various settings on push
+	PushOption func(*pushOperation)
 
-	logoutOperation struct{}
+	pushOperation struct {
+		provData []byte
+	}
 )
+
+// PushOptProvData returns a function that sets the prov bytes setting on push
+func PushOptProvData(provData []byte) PushOption {
+	return func(operation *pushOperation) {
+		operation.provData = provData
+	}
+}

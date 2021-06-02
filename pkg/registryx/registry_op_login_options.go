@@ -20,7 +20,7 @@ type (
 	// LoginOption allows specifying various settings on login
 	LoginOption func(*loginOperation)
 
-	loginOperation struct{
+	loginOperation struct {
 		username string
 		password string
 		insecure bool

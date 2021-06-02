@@ -16,16 +16,25 @@ limitations under the License.
 
 package registryx // import "helm.sh/helm/v3/pkg/registry"
 
+import (
+	"helm.sh/helm/v3/pkg/chart"
+)
+
 type (
 	pushResult struct {
-		Manifest *descriptorPushSummary `json:"manifest"`
-		Config   *descriptorPushSummary `json:"config"`
-		Chart    *descriptorPushSummary `json:"chart"`
-		Prov     *descriptorPushSummary `json:"prov"`
+		Manifest *descriptorPushSummary         `json:"manifest"`
+		Config   *descriptorPushSummary         `json:"config"`
+		Chart    *descriptorPushSummaryWithMeta `json:"chart"`
+		Prov     *descriptorPushSummary         `json:"prov"`
 	}
 
 	descriptorPushSummary struct {
 		Digest string `json:"digest"`
 		Size   int64  `json:"size"`
+	}
+
+	descriptorPushSummaryWithMeta struct {
+		descriptorPushSummary
+		Meta *chart.Metadata `json:"meta"`
 	}
 )

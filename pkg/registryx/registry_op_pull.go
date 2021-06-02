@@ -17,7 +17,9 @@ limitations under the License.
 package registryx // import "helm.sh/helm/v3/pkg/registry"
 
 import (
+	"encoding/json"
 	"fmt"
+	"helm.sh/helm/v3/pkg/chart"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/oras-project/oras-go/pkg/content"
@@ -41,7 +43,7 @@ func (c *Client) Pull(ref string, options ...PullOption) (*pullResult, error) {
 	allowedMediaTypes := []string{
 		ConfigMediaType,
 	}
-	minNumLayers := 0
+	minNumLayers := 1 // 1 for the config
 	if operation.withChart {
 		minNumLayers += 1
 		allowedMediaTypes = append(allowedMediaTypes, ChartLayerMediaType)
@@ -64,16 +66,23 @@ func (c *Client) Pull(ref string, options ...PullOption) (*pullResult, error) {
 			fmt.Sprintf("manifest does not contain minimum number of layers (%d), layers found: %d",
 				minNumLayers, numLayers))
 	}
+	var config *ocispec.Descriptor
 	var chartLayer *ocispec.Descriptor
 	var provLayer *ocispec.Descriptor
 	for _, layer := range layerDescriptors {
 		layer := layer
 		switch layer.MediaType {
+		case ConfigMediaType:
+			config = &layer
 		case ChartLayerMediaType:
 			chartLayer = &layer
 		case ProvLayerMediaType:
 			provLayer = &layer
 		}
+	}
+	if config == nil {
+		return nil, errors.New(
+			fmt.Sprintf("could not load config with mediatype %s", ConfigMediaType))
 	}
 	if operation.withChart && chartLayer == nil {
 		return nil, errors.New(
@@ -89,6 +98,15 @@ func (c *Client) Pull(ref string, options ...PullOption) (*pullResult, error) {
 				fmt.Sprintf("manifest does not contain a layer with mediatype %s",
 					ProvLayerMediaType))
 		}
+	}
+	_, configData, ok := store.Get(*config)
+	if !ok {
+		return nil, errors.Errorf("Unable to retrieve blob with digest %s", config.Digest)
+	}
+	var meta *chart.Metadata
+	err = json.Unmarshal(configData, &meta)
+	if err != nil {
+		return nil, err
 	}
 	var chartData []byte
 	if operation.withChart {
@@ -107,19 +125,23 @@ func (c *Client) Pull(ref string, options ...PullOption) (*pullResult, error) {
 		}
 	}
 	result := &pullResult{
-		Chart: &descriptorPullSummary{}, // prevent nil references
-		Prov:  &descriptorPullSummary{}, // prevent nil references
 		Manifest: &descriptorPullSummary{
 			Digest: manifest.Digest.String(),
 			Size:   manifest.Size,
 		},
+		Config: &descriptorPullSummary{
+			Digest: config.Digest.String(),
+			Size:   config.Size,
+		},
+		Chart: &descriptorPullSummaryWithMeta{
+			Meta: meta,
+		},
+		Prov:  &descriptorPullSummary{}, // prevent nil references
 	}
 	if chartData != nil {
-		result.Chart = &descriptorPullSummary{
-			Data:   chartData,
-			Digest: chartLayer.Digest.String(),
-			Size:   chartLayer.Size,
-		}
+		result.Chart.Data = chartData
+		result.Chart.Digest = chartLayer.Digest.String()
+		result.Chart.Size = chartLayer.Size
 	}
 	if provData != nil {
 		result.Prov = &descriptorPullSummary{

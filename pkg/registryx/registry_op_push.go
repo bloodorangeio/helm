@@ -48,6 +48,11 @@ func (c *Client) Push(data []byte, ref string, options ...PushOption) (*pushResu
 	if err != nil {
 		return nil, err
 	}
+	chartSummary := &descriptorPushSummaryWithMeta{
+		Meta: meta,
+	}
+	chartSummary.Digest = descriptor.Digest.String()
+	chartSummary.Size = descriptor.Size
 	result := &pushResult{
 		Manifest: &descriptorPushSummary{
 			Digest: manifest.Digest.String(),
@@ -57,10 +62,7 @@ func (c *Client) Push(data []byte, ref string, options ...PushOption) (*pushResu
 			Digest: config.Digest.String(),
 			Size:   config.Size,
 		},
-		Chart: &descriptorPushSummary{
-			Digest: descriptor.Digest.String(),
-			Size:   descriptor.Size,
-		},
+		Chart: chartSummary,
 		Prov: &descriptorPushSummary{}, // prevent nil references
 	}
 	if operation.provData != nil {

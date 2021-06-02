@@ -34,12 +34,12 @@ import (
 // BuildRefFromChartData generates an OCI reference recommended for
 // Helm charts stored in an OCI registry, in the form
 // of <host>/<parent>/<chart_name>:<chart_version>
-func BuildRefFromChartData(host string, parent string, chartData []byte) (string, error) {
+func BuildRefFromChartData(prefix string, chartData []byte) (string, error) {
 	meta, err := extractChartMeta(chartData)
 	if err != nil {
 		return "", err
 	}
-	ref := fmt.Sprintf("%s:%s", path.Join(host, parent, meta.Name), meta.Version)
+	ref := fmt.Sprintf("%s:%s", path.Join(prefix, meta.Name), meta.Version)
 	return ref, nil
 }
 

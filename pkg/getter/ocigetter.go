@@ -40,15 +40,28 @@ func (g *OCIGetter) get(href string) (*bytes.Buffer, error) {
 	client := g.opts.registryClient
 
 	ref := strings.TrimPrefix(href, "oci://")
+
+	var pullOpts []registry.PullOption
+	requestingProv := strings.HasSuffix(ref, ".prov")
+	if requestingProv {
+		ref = strings.TrimSuffix(ref, ".prov")
+		pullOpts = append(pullOpts,
+			registry.PullOptWithChart(false),
+			registry.PullOptWithProv(true))
+	}
+
 	if version := g.opts.version; version != "" {
 		ref = fmt.Sprintf("%s:%s", ref, version)
 	}
 
-	result, err := client.Pull(ref)
+	result, err := client.Pull(ref, pullOpts...)
 	if err != nil {
 		return nil, err
 	}
 
+	if requestingProv {
+		return bytes.NewBuffer(result.Prov.Data), nil
+	}
 	return bytes.NewBuffer(result.Chart.Data), nil
 }
 

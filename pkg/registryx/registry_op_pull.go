@@ -136,7 +136,8 @@ func (c *Client) Pull(ref string, options ...PullOption) (*pullResult, error) {
 		Chart: &descriptorPullSummaryWithMeta{
 			Meta: meta,
 		},
-		Prov:  &descriptorPullSummary{}, // prevent nil references
+		Prov: &descriptorPullSummary{}, // prevent nil references
+		Ref:  ref,
 	}
 	if chartData != nil {
 		result.Chart.Data = chartData

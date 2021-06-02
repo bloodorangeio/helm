@@ -26,6 +26,7 @@ type (
 		Config   *descriptorPullSummary         `json:"config"`
 		Chart    *descriptorPullSummaryWithMeta `json:"chart"`
 		Prov     *descriptorPullSummary         `json:"prov"`
+		Ref      string                         `json:"ref"`
 	}
 
 	descriptorPullSummary struct {

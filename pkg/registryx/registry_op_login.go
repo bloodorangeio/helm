@@ -27,6 +27,8 @@ func (c *Client) Login(host string, options ...LoginOption) (*loginResult, error
 	if err != nil {
 		return nil, err
 	}
-	result := &loginResult{} // no fields for now
+	result := &loginResult{
+		Host: host,
+	}
 	return result, nil
 }

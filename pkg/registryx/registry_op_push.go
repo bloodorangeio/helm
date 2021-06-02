@@ -63,7 +63,8 @@ func (c *Client) Push(data []byte, ref string, options ...PushOption) (*pushResu
 			Size:   config.Size,
 		},
 		Chart: chartSummary,
-		Prov: &descriptorPushSummary{}, // prevent nil references
+		Prov:  &descriptorPushSummary{}, // prevent nil references
+		Ref:   ref,
 	}
 	if operation.provData != nil {
 		result.Prov = &descriptorPushSummary{

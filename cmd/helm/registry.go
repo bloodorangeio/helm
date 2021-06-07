@@ -29,9 +29,11 @@ This command consists of multiple subcommands to interact with registries.
 
 func newRegistryCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "registry",
-		Short: "login to or logout from a registry",
-		Long:  registryHelp,
+		Use:               "registry",
+		Short:             "login to or logout from a registry",
+		Long:              registryHelp,
+		Hidden:            !FeatureGateOCI.IsEnabled(),
+		PersistentPreRunE: checkOCIFeatureGate(),
 	}
 	cmd.AddCommand(
 		newRegistryLoginCmd(cfg, out),

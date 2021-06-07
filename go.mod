@@ -23,7 +23,7 @@ require (
 	github.com/mattn/go-shellwords v1.0.11
 	github.com/mitchellh/copystructure v1.1.1
 	github.com/opencontainers/image-spec v1.0.1
-	github.com/oras-project/oras-go v0.1.0
+	github.com/oras-project/oras-go v0.2.0
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/pkg/errors v0.9.1
 	github.com/rubenv/sql-migrate v0.0.0-20200616145509-8d140a17f351
@@ -45,7 +45,4 @@ require (
 	sigs.k8s.io/yaml v1.2.0
 )
 
-replace (
-	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
-	github.com/oras-project/oras-go => github.com/bloodorangeio/oras-go v0.1.1-0.20210607152302-a0242181b8db
-)
+replace github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d

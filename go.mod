@@ -45,4 +45,7 @@ require (
 	sigs.k8s.io/yaml v1.2.0
 )
 
-replace github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
+replace (
+	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
+	github.com/oras-project/oras-go => github.com/bloodorangeio/oras-go v0.1.1-0.20210607221032-dc9aa475e4ca
+)

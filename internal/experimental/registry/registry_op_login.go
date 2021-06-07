@@ -31,6 +31,7 @@ func (c *Client) Login(host string, options ...LoginOption) (*loginResult, error
 		auth.WithLoginHostname(host),
 		auth.WithLoginUsername(operation.username),
 		auth.WithLoginSecret(operation.password),
+		auth.WithLoginUserAgent(userAgent),
 	}
 	if operation.insecure {
 		authorizerLoginOpts = append(authorizerLoginOpts, auth.WithLoginInsecure())

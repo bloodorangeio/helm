@@ -10,7 +10,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.0
 	github.com/Masterminds/vcs v1.13.1
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
-	github.com/containerd/containerd v1.5.0-rc.3
+	github.com/containerd/containerd v1.5.2
 	github.com/cyphar/filepath-securejoin v0.2.2
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible
@@ -32,7 +32,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
 	github.com/xeipuuv/gojsonschema v1.2.0
-	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
+	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
 	k8s.io/api v0.21.0
 	k8s.io/apiextensions-apiserver v0.21.0
@@ -45,4 +45,7 @@ require (
 	sigs.k8s.io/yaml v1.2.0
 )
 
-replace github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
+replace (
+	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
+	github.com/oras-project/oras-go => github.com/bloodorangeio/oras-go v0.1.1-0.20210607152302-a0242181b8db
+)

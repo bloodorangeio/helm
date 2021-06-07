@@ -17,7 +17,7 @@ limitations under the License.
 package registry // import "helm.sh/helm/v3/internal/experimental/registry"
 
 import (
-	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -26,7 +26,12 @@ import (
 	"github.com/oras-project/oras-go/pkg/auth"
 	dockerauth "github.com/oras-project/oras-go/pkg/auth/docker"
 
+	"helm.sh/helm/v3/internal/version"
 	"helm.sh/helm/v3/pkg/helmpath"
+)
+
+var (
+	userAgent = fmt.Sprintf("helm/%s", version.GetVersion())
 )
 
 type (
@@ -61,7 +66,10 @@ func NewClient(options ...ClientOption) (*Client, error) {
 		client.authorizer = authClient
 	}
 	if client.resolver == nil {
-		resolver, err := client.authorizer.Resolver(context.Background(), http.DefaultClient, false)
+		headers := http.Header{}
+		headers.Set("User-Agent", userAgent)
+		opts := []auth.ResolverOption{auth.WithResolverHeaders(headers)}
+		resolver, err := client.authorizer.ResolverWithOpts(opts...)
 		if err != nil {
 			return nil, err
 		}

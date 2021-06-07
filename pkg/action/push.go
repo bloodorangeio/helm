@@ -29,29 +29,19 @@ import (
 // It provides the implementation of 'helm push'.
 type Push struct {
 	ChartPathOptions
-
-	Settings *cli.EnvSettings // TODO: refactor this out of pkg/action
-
-	Devel       bool
-	Untar       bool
-	VerifyLater bool
-	WithProv    bool
-	UntarDir    string
-	DestDir     string
-	cfg         *Configuration
+	Settings *cli.EnvSettings
+	WithProv bool
+	cfg      *Configuration
 }
 
+// PushOpt is a type of function that sets options for a push action.
 type PushOpt func(*Push)
 
+// WithPushConfig sets the cfg field on the push configuration object.
 func WithPushConfig(cfg *Configuration) PushOpt {
 	return func(p *Push) {
 		p.cfg = cfg
 	}
-}
-
-// NewPush creates a new Push object.
-func NewPush() *Push {
-	return NewPushWithOpts()
 }
 
 // NewPushWithOpts creates a new push, with configuration options.
@@ -60,7 +50,6 @@ func NewPushWithOpts(opts ...PushOpt) *Push {
 	for _, fn := range opts {
 		fn(p)
 	}
-
 	return p
 }
 
@@ -82,7 +71,6 @@ func (p *Push) Run(chartRef string, remote string) (string, error) {
 	if strings.HasPrefix(remote, "oci://") {
 		c.Options = append(c.Options, pusher.WithRegistryClient(p.cfg.RegistryClient))
 		if p.Version != "" {
-			// TODO: rename to WithVersion ?
 			c.Options = append(c.Options, pusher.WithTagName(p.Version))
 		}
 	}

@@ -29,7 +29,8 @@ import (
 const pushDesc = `
 Upload a package to a registry.
 
-TODO
+If the --with-prov flag is specified, the chart MUST have an associated
+provenance file, which will also be uploaded.
 `
 
 func newPushCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
@@ -56,7 +57,7 @@ func newPushCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 	}
 
 	f := cmd.Flags()
-	addChartPathOptionsFlags(f, &client.ChartPathOptions) // TODO: all these needed?
+	addChartPathOptionsFlags(f, &client.ChartPathOptions)
 	f.BoolVar(&client.WithProv, "with-prov", false, "upload .prov file")
 
 	return cmd

@@ -31,37 +31,37 @@ func (c *Client) Push(data []byte, ref string, options ...PushOption) (*pushResu
 		option(operation)
 	}
 	store := content.NewMemoryStore()
-	descriptor := store.Add("", ChartLayerMediaType, data)
+	chartDescriptor := store.Add("", ChartLayerMediaType, data)
 	meta, err := extractChartMeta(data)
 	if err != nil {
 		return nil, err
 	}
 	configData, err := json.Marshal(meta)
-	config := store.Add("", ConfigMediaType, configData)
-	layers := []ocispec.Descriptor{descriptor}
+	configDescriptor := store.Add("", ConfigMediaType, configData)
+	descriptors := []ocispec.Descriptor{chartDescriptor}
 	var provDescriptor ocispec.Descriptor
 	if operation.provData != nil {
 		provDescriptor = store.Add("", ProvLayerMediaType, operation.provData)
-		layers = append(layers, provDescriptor)
+		descriptors = append(descriptors, provDescriptor)
 	}
-	manifest, err := oras.Push(ctx(c.out, c.debug), c.resolver, ref, store, layers,
-		oras.WithConfig(config), oras.WithNameValidation(nil))
+	manifest, err := oras.Push(ctx(c.out, c.debug), c.resolver, ref, store, descriptors,
+		oras.WithConfig(configDescriptor), oras.WithNameValidation(nil))
 	if err != nil {
 		return nil, err
 	}
 	chartSummary := &descriptorPushSummaryWithMeta{
 		Meta: meta,
 	}
-	chartSummary.Digest = descriptor.Digest.String()
-	chartSummary.Size = descriptor.Size
+	chartSummary.Digest = chartDescriptor.Digest.String()
+	chartSummary.Size = chartDescriptor.Size
 	result := &pushResult{
 		Manifest: &descriptorPushSummary{
 			Digest: manifest.Digest.String(),
 			Size:   manifest.Size,
 		},
 		Config: &descriptorPushSummary{
-			Digest: config.Digest.String(),
-			Size:   config.Size,
+			Digest: configDescriptor.Digest.String(),
+			Size:   configDescriptor.Size,
 		},
 		Chart: chartSummary,
 		Prov:  &descriptorPushSummary{}, // prevent nil references

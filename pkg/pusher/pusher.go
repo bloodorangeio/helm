@@ -131,11 +131,8 @@ var ociProvider = Provider{
 }
 
 // All finds all of the registered pushers as a list of Provider instances.
-// Currently, the built-in pushers and the discovered plugins with uploader
-// notations are collected.
+// Currently, just the built-in pushers are collected.
 func All(settings *cli.EnvSettings) Providers {
 	result := Providers{ociProvider}
-	pluginDownloaders, _ := collectPlugins(settings)
-	result = append(result, pluginDownloaders...)
 	return result
 }

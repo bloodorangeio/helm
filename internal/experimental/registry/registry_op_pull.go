@@ -19,12 +19,13 @@ package registry // import "helm.sh/helm/v3/internal/experimental/registry"
 import (
 	"encoding/json"
 	"fmt"
-	"helm.sh/helm/v3/pkg/chart"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/oras-project/oras-go/pkg/content"
 	"github.com/oras-project/oras-go/pkg/oras"
 	"github.com/pkg/errors"
+
+	"helm.sh/helm/v3/pkg/chart"
 )
 
 // Pull downloads a chart from a registry

@@ -169,7 +169,6 @@ func newRootCmd(actionConfig *action.Configuration, out io.Writer, args []string
 		newCreateCmd(out),
 		newDependencyCmd(actionConfig, out),
 		newPullCmd(actionConfig, out),
-		newPushCmd(actionConfig, out),
 		newShowCmd(out),
 		newLintCmd(out),
 		newPackageCmd(out),
@@ -194,11 +193,14 @@ func newRootCmd(actionConfig *action.Configuration, out io.Writer, args []string
 		newPluginCmd(out),
 		newVersionCmd(out),
 
-		// registry related
-		newRegistryCmd(actionConfig, out),
-
 		// Hidden documentation generator command: 'helm docs'
 		newDocsCmd(out),
+	)
+
+	// Add *experimental* subcommands
+	cmd.AddCommand(
+		newRegistryCmd(actionConfig, out),
+		newPushCmd(actionConfig, out),
 	)
 
 	// Find and add plugins

@@ -44,54 +44,54 @@ func (c *Client) Pull(ref string, options ...PullOption) (*pullResult, error) {
 	allowedMediaTypes := []string{
 		ConfigMediaType,
 	}
-	minNumLayers := 1 // 1 for the config
+	minNumDescriptors := 1 // 1 for the config
 	if operation.withChart {
-		minNumLayers += 1
+		minNumDescriptors += 1
 		allowedMediaTypes = append(allowedMediaTypes, ChartLayerMediaType)
 	}
 	if operation.withProv {
 		if !operation.ignoreMissingProv {
-			minNumLayers += 1
+			minNumDescriptors += 1
 		}
 		allowedMediaTypes = append(allowedMediaTypes, ProvLayerMediaType)
 	}
-	manifest, layerDescriptors, err := oras.Pull(ctx(c.out, c.debug), c.resolver, ref, store,
+	manifest, descriptors, err := oras.Pull(ctx(c.out, c.debug), c.resolver, ref, store,
 		oras.WithPullEmptyNameAllowed(),
 		oras.WithAllowedMediaTypes(allowedMediaTypes))
 	if err != nil {
 		return nil, err
 	}
-	numLayers := len(layerDescriptors)
-	if numLayers < minNumLayers {
+	numDescriptors := len(descriptors)
+	if numDescriptors < minNumDescriptors {
 		return nil, errors.New(
-			fmt.Sprintf("manifest does not contain minimum number of layers (%d), layers found: %d",
-				minNumLayers, numLayers))
+			fmt.Sprintf("manifest does not contain minimum number of descriptors (%d), descriptors found: %d",
+				minNumDescriptors, numDescriptors))
 	}
-	var config *ocispec.Descriptor
-	var chartLayer *ocispec.Descriptor
-	var provLayer *ocispec.Descriptor
-	for _, layer := range layerDescriptors {
-		layer := layer
-		switch layer.MediaType {
+	var configDescriptor *ocispec.Descriptor
+	var chartDescriptor *ocispec.Descriptor
+	var provDescriptor *ocispec.Descriptor
+	for _, descriptor := range descriptors {
+		d := descriptor
+		switch d.MediaType {
 		case ConfigMediaType:
-			config = &layer
+			configDescriptor = &d
 		case ChartLayerMediaType:
-			chartLayer = &layer
+			chartDescriptor = &d
 		case ProvLayerMediaType:
-			provLayer = &layer
+			provDescriptor = &d
 		}
 	}
-	if config == nil {
+	if configDescriptor == nil {
 		return nil, errors.New(
 			fmt.Sprintf("could not load config with mediatype %s", ConfigMediaType))
 	}
-	if operation.withChart && chartLayer == nil {
+	if operation.withChart && chartDescriptor == nil {
 		return nil, errors.New(
 			fmt.Sprintf("manifest does not contain a layer with mediatype %s",
 				ChartLayerMediaType))
 	}
 	var provMissing bool
-	if operation.withProv && provLayer == nil {
+	if operation.withProv && provDescriptor == nil {
 		if operation.ignoreMissingProv {
 			provMissing = true
 		} else {
@@ -100,9 +100,9 @@ func (c *Client) Pull(ref string, options ...PullOption) (*pullResult, error) {
 					ProvLayerMediaType))
 		}
 	}
-	_, configData, ok := store.Get(*config)
+	_, configData, ok := store.Get(*configDescriptor)
 	if !ok {
-		return nil, errors.Errorf("Unable to retrieve blob with digest %s", config.Digest)
+		return nil, errors.Errorf("Unable to retrieve blob with digest %s", configDescriptor.Digest)
 	}
 	var meta *chart.Metadata
 	err = json.Unmarshal(configData, &meta)
@@ -112,17 +112,17 @@ func (c *Client) Pull(ref string, options ...PullOption) (*pullResult, error) {
 	var chartData []byte
 	if operation.withChart {
 		var ok bool
-		_, chartData, ok = store.Get(*chartLayer)
+		_, chartData, ok = store.Get(*chartDescriptor)
 		if !ok {
-			return nil, errors.Errorf("Unable to retrieve blob with digest %s", chartLayer.Digest)
+			return nil, errors.Errorf("Unable to retrieve blob with digest %s", chartDescriptor.Digest)
 		}
 	}
 	var provData []byte
 	if operation.withProv && !provMissing {
 		var ok bool
-		_, provData, ok = store.Get(*provLayer)
+		_, provData, ok = store.Get(*provDescriptor)
 		if !ok {
-			return nil, errors.Errorf("Unable to retrieve blob with digest %s", provLayer.Digest)
+			return nil, errors.Errorf("Unable to retrieve blob with digest %s", provDescriptor.Digest)
 		}
 	}
 	result := &pullResult{
@@ -131,8 +131,8 @@ func (c *Client) Pull(ref string, options ...PullOption) (*pullResult, error) {
 			Size:   manifest.Size,
 		},
 		Config: &descriptorPullSummary{
-			Digest: config.Digest.String(),
-			Size:   config.Size,
+			Digest: configDescriptor.Digest.String(),
+			Size:   configDescriptor.Size,
 		},
 		Chart: &descriptorPullSummaryWithMeta{
 			Meta: meta,
@@ -142,14 +142,14 @@ func (c *Client) Pull(ref string, options ...PullOption) (*pullResult, error) {
 	}
 	if chartData != nil {
 		result.Chart.Data = chartData
-		result.Chart.Digest = chartLayer.Digest.String()
-		result.Chart.Size = chartLayer.Size
+		result.Chart.Digest = chartDescriptor.Digest.String()
+		result.Chart.Size = chartDescriptor.Size
 	}
 	if provData != nil {
 		result.Prov = &descriptorPullSummary{
 			Data:   provData,
-			Digest: provLayer.Digest.String(),
-			Size:   provLayer.Size,
+			Digest: provDescriptor.Digest.String(),
+			Size:   provDescriptor.Size,
 		}
 	}
 	return result, nil

@@ -28,10 +28,13 @@ import (
 
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/gates"
 	"helm.sh/helm/v3/pkg/helmpath"
 	"helm.sh/helm/v3/pkg/provenance"
 	"helm.sh/helm/v3/pkg/repo"
 )
+
+const FeatureGateOCI = gates.Gate("HELM_EXPERIMENTAL_OCI")
 
 // Resolver resolves dependencies from semantic version ranges to a particular version.
 type Resolver struct {
@@ -122,6 +125,10 @@ func (r *Resolver) Resolve(reqs []*chart.Dependency, repoNames map[string]string
 			found = false
 		} else {
 			version = d.Version
+			if !FeatureGateOCI.IsEnabled() {
+				return nil, errors.Wrapf(FeatureGateOCI.Error(),
+					"repository %s is an OCI registry", d.Repository)
+			}
 		}
 
 		locked[i] = &chart.Dependency{

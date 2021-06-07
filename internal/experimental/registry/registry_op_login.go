@@ -16,14 +16,26 @@ limitations under the License.
 
 package registry // import "helm.sh/helm/v3/internal/experimental/registry"
 
+import (
+	"github.com/oras-project/oras-go/pkg/auth"
+)
+
 // Login logs into a registry
 func (c *Client) Login(host string, options ...LoginOption) (*loginResult, error) {
 	operation := &loginOperation{}
 	for _, option := range options {
 		option(operation)
 	}
-	err := c.authorizer.Login(ctx(c.out, c.debug),
-		host, operation.username, operation.password, operation.insecure)
+	authorizerLoginOpts := []auth.LoginOption{
+		auth.WithLoginContext(ctx(c.out, c.debug)),
+		auth.WithLoginHostname(host),
+		auth.WithLoginUsername(operation.username),
+		auth.WithLoginSecret(operation.password),
+	}
+	if operation.insecure {
+		authorizerLoginOpts = append(authorizerLoginOpts, auth.WithLoginInsecure())
+	}
+	err := c.authorizer.LoginWithOpts(authorizerLoginOpts...)
 	if err != nil {
 		return nil, err
 	}

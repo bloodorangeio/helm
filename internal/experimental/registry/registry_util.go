@@ -18,11 +18,9 @@ package registry // import "helm.sh/helm/v3/internal/experimental/registry"
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
-	"path"
 
 	orascontext "github.com/oras-project/oras-go/pkg/context"
 	"github.com/sirupsen/logrus"
@@ -30,18 +28,6 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 )
-
-// BuildRefFromChartData generates an OCI reference recommended for
-// Helm charts stored in an OCI registry, in the form
-// of <host>/<parent>/<chart_name>:<chart_version>
-func BuildRefFromChartData(prefix string, chartData []byte) (string, error) {
-	meta, err := extractChartMeta(chartData)
-	if err != nil {
-		return "", err
-	}
-	ref := fmt.Sprintf("%s:%s", path.Join(prefix, meta.Name), meta.Version)
-	return ref, nil
-}
 
 // extractChartMeta is used to extract a chart metadata from a byte array
 // that is loaded from a chart .tgz. Currently it is necessary to create a

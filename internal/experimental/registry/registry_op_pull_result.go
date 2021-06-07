@@ -14,28 +14,29 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package registry // import "helm.sh/helm/v3/pkg/registry"
+package registry // import "helm.sh/helm/v3/internal/experimental/registry"
 
 import (
 	"helm.sh/helm/v3/pkg/chart"
 )
 
 type (
-	pushResult struct {
-		Manifest *descriptorPushSummary         `json:"manifest"`
-		Config   *descriptorPushSummary         `json:"config"`
-		Chart    *descriptorPushSummaryWithMeta `json:"chart"`
-		Prov     *descriptorPushSummary         `json:"prov"`
+	pullResult struct {
+		Manifest *descriptorPullSummary         `json:"manifest"`
+		Config   *descriptorPullSummary         `json:"config"`
+		Chart    *descriptorPullSummaryWithMeta `json:"chart"`
+		Prov     *descriptorPullSummary         `json:"prov"`
 		Ref      string                         `json:"ref"`
 	}
 
-	descriptorPushSummary struct {
+	descriptorPullSummary struct {
+		Data   []byte `json:"-"`
 		Digest string `json:"digest"`
 		Size   int64  `json:"size"`
 	}
 
-	descriptorPushSummaryWithMeta struct {
-		descriptorPushSummary
+	descriptorPullSummaryWithMeta struct {
+		descriptorPullSummary
 		Meta *chart.Metadata `json:"meta"`
 	}
 )

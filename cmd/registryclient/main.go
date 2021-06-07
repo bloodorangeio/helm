@@ -6,7 +6,7 @@ import (
 	"os"
 	"path"
 
-	rx "helm.sh/helm/v3/pkg/registry"
+	rx "helm.sh/helm/v3/internal/experimental/registry"
 )
 
 var (

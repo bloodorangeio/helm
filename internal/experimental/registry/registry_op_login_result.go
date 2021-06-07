@@ -14,20 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package registry // import "helm.sh/helm/v3/pkg/registry"
+package registry // import "helm.sh/helm/v3/internal/experimental/registry"
 
 type (
-	// PushOption allows specifying various settings on push
-	PushOption func(*pushOperation)
-
-	pushOperation struct {
-		provData []byte
+	loginResult struct {
+		Host string `json:"host"`
 	}
 )
-
-// PushOptProvData returns a function that sets the prov bytes setting on push
-func PushOptProvData(provData []byte) PushOption {
-	return func(operation *pushOperation) {
-		operation.provData = provData
-	}
-}

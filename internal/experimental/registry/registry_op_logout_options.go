@@ -14,10 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package registry // import "helm.sh/helm/v3/pkg/registry"
+package registry // import "helm.sh/helm/v3/internal/experimental/registry"
 
 type (
-	logoutResult struct {
-		Host string `json:"host"`
-	}
+	// LogoutOption allows specifying various settings on logout
+	LogoutOption func(*logoutOperation)
+
+	logoutOperation struct{}
 )

@@ -28,7 +28,6 @@ import (
 //
 // It provides the implementation of 'helm push'.
 type Push struct {
-	ChartPathOptions
 	Settings *cli.EnvSettings
 	WithProv bool
 	cfg      *Configuration
@@ -61,18 +60,12 @@ func (p *Push) Run(chartRef string, remote string) (string, error) {
 		Out:     &out,
 		Pushers: pusher.All(p.Settings),
 		Options: []pusher.Option{
-			pusher.WithBasicAuth(p.Username, p.Password),
-			pusher.WithTLSClientConfig(p.CertFile, p.KeyFile, p.CaFile),
-			pusher.WithInsecureSkipVerifyTLS(p.InsecureSkipTLSverify),
 			pusher.WithProvenance(p.WithProv),
 		},
 	}
 
 	if strings.HasPrefix(remote, "oci://") {
 		c.Options = append(c.Options, pusher.WithRegistryClient(p.cfg.RegistryClient))
-		if p.Version != "" {
-			c.Options = append(c.Options, pusher.WithTagName(p.Version))
-		}
 	}
 
 	err := c.UploadTo(chartRef, remote)

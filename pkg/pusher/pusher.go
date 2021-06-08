@@ -27,57 +27,22 @@ import (
 //
 // Pushers may or may not ignore these parameters as they are passed in.
 type options struct {
-	certFile              string
-	keyFile               string
-	caFile                string
-	insecureSkipVerifyTLS bool
-	withProv              bool
-	username              string
-	password              string
-	version               string
-	registryClient        *registry.Client
+	withProv       bool
+	registryClient *registry.Client
 }
 
 // Option allows specifying various settings configurable by the user for overriding the defaults
 // used when performing Push operations with the Pusher.
 type Option func(*options)
 
-// WithBasicAuth sets the request's Authorization header to use the provided credentials
-func WithBasicAuth(username, password string) Option {
-	return func(opts *options) {
-		opts.username = username
-		opts.password = password
-	}
-}
-
-// WithInsecureSkipVerifyTLS determines if a TLS Certificate will be checked
-func WithInsecureSkipVerifyTLS(insecureSkipVerifyTLS bool) Option {
-	return func(opts *options) {
-		opts.insecureSkipVerifyTLS = insecureSkipVerifyTLS
-	}
-}
-
-// WithTLSClientConfig sets the client auth with the provided credentials.
-func WithTLSClientConfig(certFile, keyFile, caFile string) Option {
-	return func(opts *options) {
-		opts.certFile = certFile
-		opts.keyFile = keyFile
-		opts.caFile = caFile
-	}
-}
-
-func WithTagName(tagname string) Option {
-	return func(opts *options) {
-		opts.version = tagname
-	}
-}
-
+// WithRegistryClient sets the registryClient option.
 func WithRegistryClient(client *registry.Client) Option {
 	return func(opts *options) {
 		opts.registryClient = client
 	}
 }
 
+// WithProvenance sets the withProv option.
 func WithProvenance(withProv bool) Option {
 	return func(opts *options) {
 		opts.withProv = withProv

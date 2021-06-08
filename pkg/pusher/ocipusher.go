@@ -46,13 +46,6 @@ func (pusher *OCIPusher) push(chartRef, href string) error {
 
 	client := pusher.opts.registryClient
 
-	ref := path.Join(strings.TrimPrefix(href, "oci://"), meta.Metadata.Name)
-	if version := pusher.opts.version; version != "" {
-		ref = fmt.Sprintf("%s:%s", ref, version)
-	} else {
-		ref = fmt.Sprintf("%s:%s", ref, meta.Metadata.Version)
-	}
-
 	chartBytes, err := ioutil.ReadFile(chartRef)
 	if err != nil {
 		return err
@@ -68,6 +61,10 @@ func (pusher *OCIPusher) push(chartRef, href string) error {
 		}
 		pushOpts = append(pushOpts, registry.PushOptProvData(provBytes))
 	}
+
+	ref := fmt.Sprintf("%s:%s",
+		path.Join(strings.TrimPrefix(href, "oci://"), meta.Metadata.Name),
+		meta.Metadata.Version)
 
 	_, err = client.Push(chartBytes, ref, pushOpts...)
 	if err != nil {

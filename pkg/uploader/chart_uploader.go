@@ -32,7 +32,8 @@ type ChartUploader struct {
 	// Pusher collection for the operation
 	Pushers pusher.Providers
 	// Options provide parameters to be passed along to the Pusher being initialized.
-	Options        []pusher.Option
+	Options []pusher.Option
+	// RegistryClient is a client for interacting with registries.
 	RegistryClient *registry.Client
 }
 
@@ -43,12 +44,12 @@ func (c *ChartUploader) UploadTo(ref, remote string) error {
 		return errors.Errorf("invalid chart URL format: %s", remote)
 	}
 
-	p, err := c.Pushers.ByScheme(u.Scheme)
+	pusher, err := c.Pushers.ByScheme(u.Scheme)
 	if err != nil {
 		return err
 	}
 
-	err = p.Push(ref, u.String(), c.Options...)
+	err = pusher.Push(ref, u.String(), c.Options...)
 	if err != nil {
 		return err
 	}

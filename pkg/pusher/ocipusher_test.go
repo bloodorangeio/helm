@@ -28,5 +28,3 @@ func TestNewOCIPusher(t *testing.T) {
 
 	NewOCIPusher(testfn)
 }
-
-// TODO: more coverage of underlying push function

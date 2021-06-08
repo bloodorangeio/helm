@@ -45,6 +45,6 @@ func (c *Client) Login(host string, options ...LoginOption) (*loginResult, error
 	result := &loginResult{
 		Host: host,
 	}
-	fmt.Fprintln(c.out, "Login succeeded")
+	fmt.Fprintln(c.out, "Login Succeeded")
 	return result, nil
 }

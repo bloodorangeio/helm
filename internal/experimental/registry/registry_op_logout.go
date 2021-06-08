@@ -33,6 +33,7 @@ func (c *Client) Logout(host string, opts ...LogoutOption) (*logoutResult, error
 	result := &logoutResult{
 		Host: host,
 	}
-	fmt.Fprintln(c.out, "Logout succeeded")
+	fmt.Fprintln(c.out,
+		fmt.Sprintf("Removing login credentials for %s", result.Host))
 	return result, nil
 }

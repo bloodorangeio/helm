@@ -100,6 +100,10 @@ func (c *Client) Pull(ref string, options ...PullOption) (*pullResult, error) {
 					ProvLayerMediaType))
 		}
 	}
+	_, manifestData, ok := store.Get(manifest)
+	if !ok {
+		return nil, errors.Errorf("Unable to retrieve blob with digest %s", manifest.Digest)
+	}
 	_, configData, ok := store.Get(*configDescriptor)
 	if !ok {
 		return nil, errors.Errorf("Unable to retrieve blob with digest %s", configDescriptor.Digest)
@@ -127,10 +131,12 @@ func (c *Client) Pull(ref string, options ...PullOption) (*pullResult, error) {
 	}
 	result := &pullResult{
 		Manifest: &descriptorPullSummary{
+			Data:   manifestData,
 			Digest: manifest.Digest.String(),
 			Size:   manifest.Size,
 		},
 		Config: &descriptorPullSummary{
+			Data:   configData,
 			Digest: configDescriptor.Digest.String(),
 			Size:   configDescriptor.Size,
 		},

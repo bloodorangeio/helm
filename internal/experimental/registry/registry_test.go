@@ -42,7 +42,7 @@ import (
 )
 
 var (
-	testCacheRootDir         = "helm-registry-test"
+	testWorkspaceDir         = "helm-registry-test"
 	testHtpasswdFileBasename = "authtest.htpasswd"
 	testUsername             = "myuser"
 	testPassword             = "mypass"
@@ -53,18 +53,18 @@ type RegistryClientTestSuite struct {
 	Out                     io.Writer
 	DockerRegistryHost      string
 	CompromisedRegistryHost string
-	CacheRootDir            string
+	WorkspaceDir            string
 	RegistryClient          *Client
 }
 
 func (suite *RegistryClientTestSuite) SetupSuite() {
-	suite.CacheRootDir = testCacheRootDir
-	os.RemoveAll(suite.CacheRootDir)
-	os.Mkdir(suite.CacheRootDir, 0700)
+	suite.WorkspaceDir = testWorkspaceDir
+	os.RemoveAll(suite.WorkspaceDir)
+	os.Mkdir(suite.WorkspaceDir, 0700)
 
 	var out bytes.Buffer
 	suite.Out = &out
-	credentialsFile := filepath.Join(suite.CacheRootDir, CredentialsFileBasename)
+	credentialsFile := filepath.Join(suite.WorkspaceDir, CredentialsFileBasename)
 
 	// init test client
 	var err error
@@ -78,7 +78,7 @@ func (suite *RegistryClientTestSuite) SetupSuite() {
 	// create htpasswd file (w BCrypt, which is required)
 	pwBytes, err := bcrypt.GenerateFromPassword([]byte(testPassword), bcrypt.DefaultCost)
 	suite.Nil(err, "no error generating bcrypt password for test htpasswd file")
-	htpasswdPath := filepath.Join(suite.CacheRootDir, testHtpasswdFileBasename)
+	htpasswdPath := filepath.Join(suite.WorkspaceDir, testHtpasswdFileBasename)
 	err = ioutil.WriteFile(htpasswdPath, []byte(fmt.Sprintf("%s:%s\n", testUsername, string(pwBytes))), 0644)
 	suite.Nil(err, "no error creating test htpasswd file")
 
@@ -106,7 +106,7 @@ func (suite *RegistryClientTestSuite) SetupSuite() {
 }
 
 func (suite *RegistryClientTestSuite) TearDownSuite() {
-	os.RemoveAll(suite.CacheRootDir)
+	os.RemoveAll(suite.WorkspaceDir)
 }
 
 func (suite *RegistryClientTestSuite) Test_0_Login() {
@@ -120,19 +120,91 @@ func (suite *RegistryClientTestSuite) Test_0_Login() {
 		LoginOptInsecure(true))
 	suite.NotNil(err, "error logging into registry with bad credentials, insecure mode")
 
-	_, err = suite.RegistryClient.Login(suite.DockerRegistryHost,
+	result, err := suite.RegistryClient.Login(suite.DockerRegistryHost,
 		LoginOptBasicAuth(testUsername, testPassword),
 		LoginOptInsecure(false))
 	suite.Nil(err, "no error logging into registry with good credentials")
+	suite.Equal(suite.DockerRegistryHost, result.Host, "result.Host is as expected")
 
 	_, err = suite.RegistryClient.Login(suite.DockerRegistryHost,
 		LoginOptBasicAuth(testUsername, testPassword),
 		LoginOptInsecure(true))
 	suite.Nil(err, "no error logging into registry with good credentials, insecure mode")
+	suite.Equal(suite.DockerRegistryHost, result.Host, "result.Host is as expected")
 }
 
 func (suite *RegistryClientTestSuite) Test_1_Push() {
-	// TODO
+	// Bad bytes
+	ref := fmt.Sprintf("%s/testrepo/testchart:1.2.3", suite.DockerRegistryHost)
+	_, err := suite.RegistryClient.Push([]byte("hello"), ref)
+	suite.NotNil(err, "error pushing non-chart bytes")
+
+	// Load a test chart
+	chartData, err := ioutil.ReadFile("../../../pkg/downloader/testdata/local-subchart-0.1.0.tgz")
+	suite.Nil(err, "no error loading test chart")
+	meta, err := extractChartMeta(chartData)
+	suite.Nil(err, "no error extracting chart meta")
+
+	// non-strict ref (chart name)
+	ref = fmt.Sprintf("%s/testrepo/boop:%s", suite.DockerRegistryHost, meta.Version)
+	_, err = suite.RegistryClient.Push(chartData, ref)
+	suite.NotNil(err, "error pushing non-strict ref (bad basename)")
+
+	// non-strict ref (chart name), with strict mode disabled
+	_, err = suite.RegistryClient.Push(chartData, ref, PushOptStrictMode(false))
+	suite.Nil(err, "no error pushing non-strict ref (bad basename), with strict mode disabled")
+
+	// non-strict ref (chart version)
+	ref = fmt.Sprintf("%s/testrepo/%s:latest", suite.DockerRegistryHost, meta.Name)
+	_, err = suite.RegistryClient.Push(chartData, ref)
+	suite.NotNil(err, "error pushing non-strict ref (bad tag)")
+
+	// non-strict ref (chart version), with strict mode disabled
+	_, err = suite.RegistryClient.Push(chartData, ref, PushOptStrictMode(false))
+	suite.Nil(err, "no error pushing non-strict ref (bad tag), with strict mode disabled")
+
+	// basic push, good ref
+	ref = fmt.Sprintf("%s/testrepo/%s:%s", suite.DockerRegistryHost, meta.Name, meta.Version)
+	_, err = suite.RegistryClient.Push(chartData, ref)
+	suite.Nil(err, "no error pushing good ref")
+
+	// Load another test chart
+	chartData, err = ioutil.ReadFile("../../../pkg/downloader/testdata/signtest-0.1.0.tgz")
+	suite.Nil(err, "no error loading test chart")
+	meta, err = extractChartMeta(chartData)
+	suite.Nil(err, "no error extracting chart meta")
+
+	// Load prov file
+	provData, err := ioutil.ReadFile("../../../pkg/downloader/testdata/signtest-0.1.0.tgz.prov")
+	suite.Nil(err, "no error loading test prov")
+
+	// push with prov
+	ref = fmt.Sprintf("%s/testrepo/%s:%s", suite.DockerRegistryHost, meta.Name, meta.Version)
+	result, err := suite.RegistryClient.Push(chartData, ref, PushOptProvData(provData))
+	suite.Nil(err, "no error pushing good ref with prov")
+
+	// Validate the output
+	// Note: these digests/sizes etc may change if the test chart/prov files are modified,
+	// or if the format of the OCI manifest changes
+	suite.Equal(ref, result.Ref)
+	suite.Equal(meta.Name, result.Chart.Meta.Name)
+	suite.Equal(meta.Version, result.Chart.Meta.Version)
+	suite.Equal(int64(512), result.Manifest.Size)
+	suite.Equal(int64(99), result.Config.Size)
+	suite.Equal(int64(973), result.Chart.Size)
+	suite.Equal(int64(695), result.Prov.Size)
+	suite.Equal(
+		"sha256:c4fd4ca31f12f50a7f704bb1dfdf2e768b1e8bdeac3991b534b6bdb3f535aab1",
+		result.Manifest.Digest)
+	suite.Equal(
+		"sha256:8d17cb6bf6ccd8c29aace9a658495cbd5e2e87fc267876e86117c7db681c9580",
+		result.Config.Digest)
+	suite.Equal(
+		"sha256:e5ef611620fb97704d8751c16bab17fedb68883bfb0edc76f78a70e9173f9b55",
+		result.Chart.Digest)
+	suite.Equal(
+		"sha256:b0a02b7412f78ae93324d48df8fcc316d8482e5ad7827b5b238657a29a22f256",
+		result.Prov.Digest)
 }
 
 func (suite *RegistryClientTestSuite) Test_2_Pull() {
@@ -143,8 +215,9 @@ func (suite *RegistryClientTestSuite) Test_3_Logout() {
 	_, err := suite.RegistryClient.Logout("this-host-aint-real:5000")
 	suite.NotNil(err, "error logging out of registry that has no entry")
 
-	_, err = suite.RegistryClient.Logout(suite.DockerRegistryHost)
+	result, err := suite.RegistryClient.Logout(suite.DockerRegistryHost)
 	suite.Nil(err, "no error logging out of registry")
+	suite.Equal(suite.DockerRegistryHost, result.Host, "result.Host is as expected")
 }
 
 func (suite *RegistryClientTestSuite) Test_4_ManInTheMiddle() {
@@ -153,7 +226,6 @@ func (suite *RegistryClientTestSuite) Test_4_ManInTheMiddle() {
 	// returns content that does not match the expected digest
 	_, err := suite.RegistryClient.Pull(ref)
 	suite.NotNil(err)
-	fmt.Println(err.Error())
 	suite.True(errdefs.IsFailedPrecondition(err))
 }
 

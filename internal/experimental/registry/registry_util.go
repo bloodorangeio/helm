@@ -17,10 +17,9 @@ limitations under the License.
 package registry // import "helm.sh/helm/v3/internal/experimental/registry"
 
 import (
+	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
-	"os"
 
 	orascontext "github.com/oras-project/oras-go/pkg/context"
 	"github.com/sirupsen/logrus"
@@ -30,16 +29,8 @@ import (
 )
 
 // extractChartMeta is used to extract a chart metadata from a byte array
-// that is loaded from a chart .tgz. Currently it is necessary to create a
-// temporary file with the .tgz contents in order to use chartutil.LoadChartfile
 func extractChartMeta(chartData []byte) (*chart.Metadata, error) {
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "helm-oci-extract-")
-	if err != nil {
-		return nil, err
-	}
-	defer os.Remove(tmpFile.Name())
-	tmpFile.Write(chartData)
-	ch, err := loader.Load(tmpFile.Name())
+	ch, err := loader.LoadArchive(bytes.NewReader(chartData))
 	if err != nil {
 		return nil, err
 	}

@@ -54,7 +54,6 @@ func NewClient(options ...ClientOption) (*Client, error) {
 	for _, option := range options {
 		option(client)
 	}
-	// set defaults if fields are missing
 	if client.credentialsFile == "" {
 		client.credentialsFile = helmpath.CachePath("registry", CredentialsFileBasename)
 	}

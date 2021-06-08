@@ -35,10 +35,7 @@ func (g *OCIPusher) Push(chartRef, href string, options ...Option) error {
 	for _, opt := range options {
 		opt(&g.opts)
 	}
-	return g.push(chartRef, href)
-}
 
-func (g *OCIPusher) push(chartRef, href string) error {
 	meta, err := loader.Load(chartRef)
 	if err != nil {
 		return err

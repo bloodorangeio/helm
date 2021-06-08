@@ -18,7 +18,10 @@ package registry // import "helm.sh/helm/v3/internal/experimental/registry"
 
 import (
 	"encoding/json"
-	
+	"errors"
+	"fmt"
+	"strings"
+
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/oras-project/oras-go/pkg/content"
 	"github.com/oras-project/oras-go/pkg/oras"
@@ -26,16 +29,24 @@ import (
 
 // Push uploads a chart to a registry.
 func (c *Client) Push(data []byte, ref string, options ...PushOption) (*pushResult, error) {
-	operation := &pushOperation{}
+	operation := &pushOperation{
+		strictMode: true, // By default, enable strict mode
+	}
 	for _, option := range options {
 		option(operation)
 	}
-	store := content.NewMemoryStore()
-	chartDescriptor := store.Add("", ChartLayerMediaType, data)
 	meta, err := extractChartMeta(data)
 	if err != nil {
 		return nil, err
 	}
+	if operation.strictMode {
+		if !strings.HasSuffix(ref, fmt.Sprintf("/%s:%s", meta.Name, meta.Version)) {
+			return nil, errors.New(
+				"strict mode enabled, ref basename and tag must match the chart name and version")
+		}
+	}
+	store := content.NewMemoryStore()
+	chartDescriptor := store.Add("", ChartLayerMediaType, data)
 	configData, err := json.Marshal(meta)
 	configDescriptor := store.Add("", ConfigMediaType, configData)
 	descriptors := []ocispec.Descriptor{chartDescriptor}

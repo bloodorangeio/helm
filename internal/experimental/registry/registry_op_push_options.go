@@ -21,7 +21,8 @@ type (
 	PushOption func(*pushOperation)
 
 	pushOperation struct {
-		provData []byte
+		provData   []byte
+		strictMode bool
 	}
 )
 
@@ -29,5 +30,12 @@ type (
 func PushOptProvData(provData []byte) PushOption {
 	return func(operation *pushOperation) {
 		operation.provData = provData
+	}
+}
+
+// PushOptStrictMode returns a function that sets the strictMode setting on push
+func PushOptStrictMode(strictMode bool) PushOption {
+	return func(operation *pushOperation) {
+		operation.strictMode = strictMode
 	}
 }

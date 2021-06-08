@@ -17,6 +17,8 @@ limitations under the License.
 package registry // import "helm.sh/helm/v3/internal/experimental/registry"
 
 import (
+	"fmt"
+
 	"github.com/oras-project/oras-go/pkg/auth"
 )
 
@@ -43,5 +45,6 @@ func (c *Client) Login(host string, options ...LoginOption) (*loginResult, error
 	result := &loginResult{
 		Host: host,
 	}
+	fmt.Fprintln(c.out, "Login succeeded")
 	return result, nil
 }

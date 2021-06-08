@@ -31,20 +31,23 @@ type OCIPusher struct {
 }
 
 // Push performs a Push from repo.Pusher.
-func (g *OCIPusher) Push(chartRef, href string, options ...Option) error {
+func (pusher *OCIPusher) Push(chartRef, href string, options ...Option) error {
 	for _, opt := range options {
-		opt(&g.opts)
+		opt(&pusher.opts)
 	}
+	return pusher.push(chartRef, href)
+}
 
+func (pusher *OCIPusher) push(chartRef, href string) error {
 	meta, err := loader.Load(chartRef)
 	if err != nil {
 		return err
 	}
 
-	client := g.opts.registryClient
+	client := pusher.opts.registryClient
 
 	ref := path.Join(strings.TrimPrefix(href, "oci://"), meta.Metadata.Name)
-	if version := g.opts.version; version != "" {
+	if version := pusher.opts.version; version != "" {
 		ref = fmt.Sprintf("%s:%s", ref, version)
 	} else {
 		ref = fmt.Sprintf("%s:%s", ref, meta.Metadata.Version)
@@ -57,7 +60,7 @@ func (g *OCIPusher) Push(chartRef, href string, options ...Option) error {
 
 	var pushOpts []registry.PushOption
 	var provBytes []byte
-	if g.opts.withProv {
+	if pusher.opts.withProv {
 		provRef := fmt.Sprintf("%s.prov", chartRef)
 		provBytes, err = ioutil.ReadFile(provRef)
 		if err != nil {

@@ -16,6 +16,10 @@ limitations under the License.
 
 package registry // import "helm.sh/helm/v3/internal/experimental/registry"
 
+import (
+	"fmt"
+)
+
 // Logout logs out of a registry
 func (c *Client) Logout(host string, opts ...LogoutOption) (*logoutResult, error) {
 	operation := &logoutOperation{}
@@ -29,5 +33,6 @@ func (c *Client) Logout(host string, opts ...LogoutOption) (*logoutResult, error
 	result := &logoutResult{
 		Host: host,
 	}
+	fmt.Fprintln(c.out, "Logout succeeded")
 	return result, nil
 }

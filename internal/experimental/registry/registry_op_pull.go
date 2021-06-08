@@ -152,5 +152,7 @@ func (c *Client) Pull(ref string, options ...PullOption) (*pullResult, error) {
 			Size:   provDescriptor.Size,
 		}
 	}
+	fmt.Fprintln(c.out, fmt.Sprintf("Pulled: %s", result.Ref))
+	fmt.Fprintln(c.out, fmt.Sprintf("Digest: %s", result.Manifest.Digest))
 	return result, nil
 }

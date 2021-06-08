@@ -84,5 +84,7 @@ func (c *Client) Push(data []byte, ref string, options ...PushOption) (*pushResu
 			Size:   provDescriptor.Size,
 		}
 	}
+	fmt.Fprintln(c.out, fmt.Sprintf("Pushed: %s", result.Ref))
+	fmt.Fprintln(c.out, fmt.Sprintf("Digest: %s", result.Manifest.Digest))
 	return result, err
 }
